@@ -2,7 +2,8 @@
     "name": "papa-mamadou-diouf/gestion_university",
     "autoload": {
         "psr-4": {
-            "PapaMamadouDiouf\\GestionUniversity\\": "src/"
+            "PapaMamadouDiouf\\GestionUniversity\\": "src/",
+            "App\\": "src/"
         }
     },
     "authors": [
