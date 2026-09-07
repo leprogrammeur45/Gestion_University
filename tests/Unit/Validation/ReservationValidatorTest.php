@@ -12,12 +12,12 @@ class ReservationValidatorTest extends TestCase
         $validator = new ReservationValidator();
 
         $data = [
-            'salle_id' => 1,
+            'salle_id' => '1',
             'responsable' => 'Mamadou Diouf',
             'email' => 'mamadou@example.com',
             'motif' => 'Réunion pédagogique',
-            'date_debut' => '2026-09-10 10:00:00',
-            'date_fin' => '2026-09-10 12:00:00',
+            'date_debut' => '2026-09-10T10:00',
+            'date_fin' => '2026-09-10T12:00',
         ];
 
         $result = $validator->validate($data);
@@ -30,12 +30,12 @@ class ReservationValidatorTest extends TestCase
         $validator = new ReservationValidator();
 
         $data = [
-            'salle_id' => -1,
+            'salle_id' => '-1',
             'responsable' => 'Mamadou Diouf',
             'email' => 'mamadou@example.com',
             'motif' => 'Réunion pédagogique',
-            'date_debut' => '2026-09-10 10:00:00',
-            'date_fin' => '2026-09-10 12:00:00',
+            'date_debut' => '2026-09-10T10:00',
+            'date_fin' => '2026-09-10T12:00',
         ];
 
         $result = $validator->validate($data);
@@ -43,4 +43,3 @@ class ReservationValidatorTest extends TestCase
         $this->assertFalse($result->isValid());
     }
 }
-
