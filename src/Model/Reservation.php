@@ -9,6 +9,8 @@ class Reservation extends Model
 {
     protected $table = 'reservations';
 
+    protected $dateFormat = 'Y-m-d H:i:s';
+
     protected $fillable = [
         'salle_id',
         'responsable',

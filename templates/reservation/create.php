@@ -4,89 +4,45 @@ $title = 'Créer une réservation';
 
 ob_start();
 
+$errors = $errors ?? [];
+
+$fieldError = static function (string $field) use ($errors) {
+    return $errors[$field][0] ?? null;
+};
+
 ?>
 
 <div class="page-header">
-
     <div>
         <h2>📅 Créer une réservation</h2>
-
-        <p>
-            Réservez une salle pour une activité universitaire.
-        </p>
+        <p>Planifiez l'utilisation d'une salle universitaire.</p>
     </div>
-
 </div>
-
-<?php if (!empty($errors)): ?>
-
-    <div class="alert alert-danger">
-
-        <span class="alert-icon">⚠</span>
-
-        <div>
-
-            <strong>Impossible de créer la réservation</strong>
-
-            <ul>
-
-                <?php foreach ($errors as $fieldErrors): ?>
-
-                    <?php foreach ($fieldErrors as $error): ?>
-
-                        <li>
-                            <?= htmlspecialchars($error) ?>
-                        </li>
-
-                    <?php endforeach; ?>
-
-                <?php endforeach; ?>
-
-            </ul>
-
-        </div>
-
-    </div>
-
-<?php endif; ?>
-
 
 <div class="form-card reservation-form-card">
 
     <div class="form-card-header">
-
         <div class="form-card-icon">
             📅
         </div>
 
         <div>
-
-            <h3>
-                Nouvelle réservation
-            </h3>
-
+            <h3>Nouvelle réservation</h3>
             <p>
-                Remplissez les informations ci-dessous.
+                Renseignez les informations nécessaires pour réserver une salle.
             </p>
-
         </div>
-
     </div>
-
 
     <form method="POST" action="/reservations">
 
-
-        <div class="field">
+        <div class="field<?= $fieldError('salle_id') ? ' has-error' : '' ?>">
 
             <label for="salle_id">
                 Salle
             </label>
 
-            <select
-                id="salle_id"
-                name="salle_id"
-            >
+            <select id="salle_id" name="salle_id">
 
                 <option value="">
                     Sélectionnez une salle
@@ -101,7 +57,7 @@ ob_start();
                             <?= ((string) ($data['salle_id'] ?? '') === (string) $salle->id) ? 'selected' : '' ?>
                         >
                             <?= htmlspecialchars($salle->nom) ?>
-                            -
+                            —
                             <?= htmlspecialchars($salle->batiment) ?>
                         </option>
 
@@ -112,13 +68,21 @@ ob_start();
             </select>
 
             <div class="field-hint">
-                Seules les salles actives peuvent être réservées.
+                Seules les salles actuellement actives sont disponibles.
             </div>
+
+            <?php if ($fieldError('salle_id')): ?>
+
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('salle_id')) ?>
+                </div>
+
+            <?php endif; ?>
 
         </div>
 
 
-        <div class="field">
+        <div class="field<?= $fieldError('responsable') ? ' has-error' : '' ?>">
 
             <label for="responsable">
                 Responsable
@@ -128,17 +92,25 @@ ob_start();
                 type="text"
                 id="responsable"
                 name="responsable"
-                placeholder="Nom du responsable"
+                placeholder="Nom et prénom du responsable"
                 value="<?= htmlspecialchars($data['responsable'] ?? '') ?>"
             >
+
+            <?php if ($fieldError('responsable')): ?>
+
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('responsable')) ?>
+                </div>
+
+            <?php endif; ?>
 
         </div>
 
 
-        <div class="field">
+        <div class="field<?= $fieldError('email') ? ' has-error' : '' ?>">
 
             <label for="email">
-                Email
+                Adresse email
             </label>
 
             <input
@@ -149,32 +121,51 @@ ob_start();
                 value="<?= htmlspecialchars($data['email'] ?? '') ?>"
             >
 
+            <div class="field-hint">
+                Cette adresse sera associée à la réservation.
+            </div>
+
+            <?php if ($fieldError('email')): ?>
+
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('email')) ?>
+                </div>
+
+            <?php endif; ?>
+
         </div>
 
 
-        <div class="field">
+        <div class="field<?= $fieldError('motif') ? ' has-error' : '' ?>">
 
             <label for="motif">
-                Motif
+                Motif de la réservation
             </label>
 
             <textarea
                 id="motif"
                 name="motif"
-                placeholder="Motif de la réservation"
+                placeholder="Exemple : réunion pédagogique, cours, soutenance..."
             ><?= htmlspecialchars($data['motif'] ?? '') ?></textarea>
 
             <div class="field-hint">
-                Indiquez la raison de l'utilisation de la salle.
+                Le motif doit contenir entre 5 et 255 caractères.
             </div>
+
+            <?php if ($fieldError('motif')): ?>
+
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('motif')) ?>
+                </div>
+
+            <?php endif; ?>
 
         </div>
 
 
         <div class="reservation-dates">
 
-
-            <div class="field">
+            <div class="field<?= $fieldError('date_debut') ? ' has-error' : '' ?>">
 
                 <label for="date_debut">
                     Date de début
@@ -187,10 +178,18 @@ ob_start();
                     value="<?= htmlspecialchars($data['date_debut'] ?? '') ?>"
                 >
 
+                <?php if ($fieldError('date_debut')): ?>
+
+                    <div class="field-error">
+                        ⚠ <?= htmlspecialchars($fieldError('date_debut')) ?>
+                    </div>
+
+                <?php endif; ?>
+
             </div>
 
 
-            <div class="field">
+            <div class="field<?= $fieldError('date_fin') ? ' has-error' : '' ?>">
 
                 <label for="date_fin">
                     Date de fin
@@ -203,32 +202,31 @@ ob_start();
                     value="<?= htmlspecialchars($data['date_fin'] ?? '') ?>"
                 >
 
-            </div>
+                <?php if ($fieldError('date_fin')): ?>
 
+                    <div class="field-error">
+                        ⚠ <?= htmlspecialchars($fieldError('date_fin')) ?>
+                    </div>
+
+                <?php endif; ?>
+
+            </div>
 
         </div>
 
 
         <div class="reservation-info">
-
-            <span class="reservation-info-icon">
-                ℹ
-            </span>
+            <span class="reservation-info-icon">ℹ</span>
 
             <div>
-
-                <strong>
-                    Conditions de réservation
-                </strong>
+                <strong>Informations importantes</strong>
 
                 <p>
                     La réservation doit commencer dans le futur,
-                    durer au maximum 4 heures et ne pas chevaucher
+                    ne pas dépasser 4 heures et ne pas chevaucher
                     une réservation existante.
                 </p>
-
             </div>
-
         </div>
 
 
@@ -250,11 +248,9 @@ ob_start();
 
         </div>
 
-
     </form>
 
 </div>
-
 
 <?php
 

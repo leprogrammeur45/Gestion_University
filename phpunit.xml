@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!-- Configuration : ce sont les réglages qui indiquent à un programme comment fonctionner. 
+phpunit.xml contient les réglages de PHPUnit. -->
+
+<!-- Tests manuels → tester l'application dans le navigateur. -->
+
+<!-- Tests automatisés avec PHPUnit → tester automatiquement le code. -->
+
 <phpunit
     bootstrap="vendor/autoload.php"
     colors="true"
@@ -15,3 +22,23 @@
         </testsuite>
     </testsuites>
 </phpunit>
+
+
+<!-- phpunit.xml
+    ↓
+configure PHPUnit
+    ↓
+bootstrap
+    → charger l'autoload
+    ↓
+testsuites
+    → trouver les tests
+    ↓
+cacheDirectory
+    → stocker le cache -->
+
+
+<!-- 
+phpunit.xml est le fichier de configuration de PHPUnit. 
+Il indique notamment à PHPUnit de charger l'autoloader
+Composer, où trouver les tests et où stocker son cache. -->

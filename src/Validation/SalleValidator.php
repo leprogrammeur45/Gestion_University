@@ -14,6 +14,7 @@ class SalleValidator implements ValidatorInterface
         'reunion',
     ];
 
+    /** Vérifie les données saisies pour une salle. */
     public function validate(array $data): ValidationResult
     {
         $errors = [];
@@ -29,7 +30,12 @@ class SalleValidator implements ValidatorInterface
         }
 
         // capacite
-        if (!isset($data['capacite']) || !v::intType()->between(1, 1000)->validate($data['capacite'])) {
+        $capaciteValide = isset($data['capacite'])
+            && filter_var($data['capacite'], FILTER_VALIDATE_INT) !== false
+            && (int) $data['capacite'] >= 1
+            && (int) $data['capacite'] <= 1000;
+
+        if (!$capaciteValide) {
             $errors['capacite'][] = 'La capacité doit être un entier compris entre 1 et 1000.';
         }
 
@@ -39,7 +45,10 @@ class SalleValidator implements ValidatorInterface
         }
 
         // active
-        if (!isset($data['active']) || !v::boolType()->validate($data['active'])) {
+        $activeValide = is_bool($data['active'] ?? null)
+            || in_array($data['active'] ?? null, ['0', '1', 0, 1], true);
+
+        if (!$activeValide) {
             $errors['active'][] = 'Le champ active doit être un booléen.';
         }
 

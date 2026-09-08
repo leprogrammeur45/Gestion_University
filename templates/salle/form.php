@@ -3,127 +3,205 @@
 $title = isset($salle) ? 'Modifier une salle' : 'Ajouter une salle';
 
 ob_start();
+
+$errors = $errors ?? [];
+$formData = $data ?? [];
+
+$fieldError = static function (string $field) use ($errors) {
+    return $errors[$field][0] ?? null;
+};
+
 ?>
 
-<h2><?= isset($salle) ? 'Modifier une salle' : 'Ajouter une salle' ?></h2>
+<div class="page-header">
 
-<?php if (!empty($errors)): ?>
+    <h2>
+        <?= isset($salle) ? '✏️ Modifier une salle' : '➕ Ajouter une salle' ?>
+    </h2>
 
-    <div>
-        <h3>Erreurs :</h3>
+</div>
 
-        <ul>
-            <?php foreach ($errors as $fieldErrors): ?>
-                <?php foreach ($fieldErrors as $error): ?>
-                    <li><?= htmlspecialchars($error) ?></li>
-                <?php endforeach; ?>
-            <?php endforeach; ?>
-        </ul>
-    </div>
+<div class="form-card">
 
-<?php endif; ?>
+    <form
+        method="POST"
+        action="<?= isset($salle)
+            ? '/salles/' . htmlspecialchars((string) $salle->id) . '/edit'
+            : '/salles'
+        ?>"
+    >
 
-<form
-    method="POST"
-    action="<?= isset($salle)
-        ? '/salles/' . htmlspecialchars((string) $salle->id) . '/edit'
-        : '/salles'
-    ?>"
->
+        <div class="field<?= $fieldError('nom') ? ' has-error' : '' ?>">
 
-    <div>
-        <label for="nom">Nom</label>
+            <label for="nom">Nom</label>
 
-        <input
-            type="text"
-            id="nom"
-            name="nom"
-            value="<?= htmlspecialchars($salle->nom ?? '') ?>"
-        >
-    </div>
+            <input
+                type="text"
+                id="nom"
+                name="nom"
+                placeholder="Ex. B12"
+                value="<?= htmlspecialchars($formData['nom'] ?? $salle->nom ?? '') ?>"
+            >
 
-    <div>
-        <label for="batiment">Bâtiment</label>
+            <?php if ($fieldError('nom')): ?>
 
-        <input
-            type="text"
-            id="batiment"
-            name="batiment"
-            value="<?= htmlspecialchars($salle->batiment ?? '') ?>"
-        >
-    </div>
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('nom')) ?>
+                </div>
 
-    <div>
-        <label for="capacite">Capacité</label>
+            <?php endif; ?>
 
-        <input
-            type="number"
-            id="capacite"
-            name="capacite"
-            value="<?= htmlspecialchars((string) ($salle->capacite ?? '')) ?>"
-        >
-    </div>
+        </div>
 
-    <div>
-        <label for="type">Type</label>
+        <div class="field<?= $fieldError('batiment') ? ' has-error' : '' ?>">
 
-        <select id="type" name="type">
+            <label for="batiment">Bâtiment</label>
 
-            <option value="cours"
-                <?= (($salle->type ?? '') === 'cours') ? 'selected' : '' ?>>
-                Cours
-            </option>
+            <input
+                type="text"
+                id="batiment"
+                name="batiment"
+                placeholder="Ex. B"
+                value="<?= htmlspecialchars($formData['batiment'] ?? $salle->batiment ?? '') ?>"
+            >
 
-            <option value="informatique"
-                <?= (($salle->type ?? '') === 'informatique') ? 'selected' : '' ?>>
-                Informatique
-            </option>
+            <?php if ($fieldError('batiment')): ?>
 
-            <option value="laboratoire"
-                <?= (($salle->type ?? '') === 'laboratoire') ? 'selected' : '' ?>>
-                Laboratoire
-            </option>
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('batiment')) ?>
+                </div>
 
-            <option value="amphitheatre"
-                <?= (($salle->type ?? '') === 'amphitheatre') ? 'selected' : '' ?>>
-                Amphithéâtre
-            </option>
+            <?php endif; ?>
 
-            <option value="reunion"
-                <?= (($salle->type ?? '') === 'reunion') ? 'selected' : '' ?>>
-                Réunion
-            </option>
+        </div>
 
-        </select>
-    </div>
+        <div class="field<?= $fieldError('capacite') ? ' has-error' : '' ?>">
 
-    <div>
-        <label for="active">Active</label>
+            <label for="capacite">Capacité</label>
 
-        <input
-            type="hidden"
-            name="active"
-            value="0"
-        >
+            <input
+                type="number"
+                id="capacite"
+                name="capacite"
+                placeholder="Ex. 40"
+                value="<?= htmlspecialchars((string) ($formData['capacite'] ?? $salle->capacite ?? '')) ?>"
+            >
 
-        <input
-            type="checkbox"
-            id="active"
-            name="active"
-            value="1"
-            <?= (($salle->active ?? true) ? 'checked' : '') ?>
-        >
-    </div>
+            <?php if ($fieldError('capacite')): ?>
 
-    <button type="submit">
-        <?= isset($salle) ? 'Modifier' : 'Ajouter' ?>
-    </button>
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('capacite')) ?>
+                </div>
 
-</form>
+            <?php endif; ?>
 
-<p>
-    <a href="/salles">Retour à la liste</a>
-</p>
+        </div>
+
+        <div class="field<?= $fieldError('type') ? ' has-error' : '' ?>">
+
+            <label for="type">Type</label>
+
+            <select id="type" name="type">
+
+                <option
+                    value="cours"
+                      <?= (($formData['type'] ?? $salle->type ?? '') === 'cours') ? 'selected' : '' ?>
+                >
+                    Cours
+                </option>
+
+                <option
+                    value="informatique"
+                      <?= (($formData['type'] ?? $salle->type ?? '') === 'informatique') ? 'selected' : '' ?>
+                >
+                    Informatique
+                </option>
+
+                <option
+                    value="laboratoire"
+                      <?= (($formData['type'] ?? $salle->type ?? '') === 'laboratoire') ? 'selected' : '' ?>
+                >
+                    Laboratoire
+                </option>
+
+                <option
+                    value="amphitheatre"
+                      <?= (($formData['type'] ?? $salle->type ?? '') === 'amphitheatre') ? 'selected' : '' ?>
+                >
+                    Amphithéâtre
+                </option>
+
+                <option
+                    value="reunion"
+                      <?= (($formData['type'] ?? $salle->type ?? '') === 'reunion') ? 'selected' : '' ?>
+                >
+                    Réunion
+                </option>
+
+            </select>
+
+            <?php if ($fieldError('type')): ?>
+
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('type')) ?>
+                </div>
+
+            <?php endif; ?>
+
+        </div>
+
+        <div class="field">
+
+            <label for="active">Statut</label>
+
+            <input
+                type="hidden"
+                name="active"
+                value="0"
+            >
+
+            <div class="checkbox-row">
+
+                <input
+                    type="checkbox"
+                    id="active"
+                    name="active"
+                    value="1"
+                      <?= in_array($formData['active'] ?? ($salle->active ?? true), [true, 1, '1'], true) ? 'checked' : '' ?>
+                >
+
+                <label for="active">
+                    Salle active
+                </label>
+
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                <?= isset($salle)
+                    ? 'Enregistrer les modifications'
+                    : 'Créer la salle'
+                ?>
+            </button>
+
+            <a
+                href="/salles"
+                class="btn btn-secondary"
+            >
+                Annuler
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
 
 <?php
 

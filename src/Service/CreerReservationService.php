@@ -16,7 +16,8 @@ class CreerReservationService
     ) {
     }
 
-    public function executer(CreerReservationDTO $dto)
+    /** Crée une réservation après vérification des règles métier. */
+    public function executer(CreerReservationDTO $dto): Reservation
     {
         // 1. Retrouver la salle
         $salle = $this->salleRepository->retrouver($dto->salleId);
@@ -74,9 +75,11 @@ class CreerReservationService
         $reservation->motif = $dto->motif;
         $reservation->date_debut = $dto->dateDebut;
         $reservation->date_fin = $dto->dateFin;
-        $reservation->statut = 'confirmée';
 
-         // 8. Enregistrer la réservation
+        // Valeur technique utilisée par MySQL
+        $reservation->statut = 'confirmee';
+
+        // 8. Enregistrer la réservation
         $reservation = $this->reservationRepository->enregistrer($reservation);
 
         // 9. Retourner le résultat

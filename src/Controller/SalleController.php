@@ -30,6 +30,12 @@ class SalleController
     {
         $salle = $this->salleRepository->retrouver($id);
 
+        if ($salle === null) {
+            http_response_code(404);
+            require __DIR__ . '/../../templates/error/404.php';
+            return;
+        }
+
         require __DIR__ . '/../../templates/salle/show.php';
     }
 
@@ -63,7 +69,7 @@ class SalleController
             batiment: $data['batiment'],
             capacite: (int) $data['capacite'],
             type: $data['type'],
-            active: (bool) $data['active']
+            active: filter_var($data['active'], FILTER_VALIDATE_BOOLEAN)
         );
 
         // Créer la salle
@@ -77,11 +83,17 @@ class SalleController
     // Afficher le formulaire de modification
     public function edit(int $id): void
     {
-    // Récupérer la salle
-    $salle = $this->salleRepository->retrouver($id);
+        // Récupérer la salle
+        $salle = $this->salleRepository->retrouver($id);
 
-    // Afficher le formulaire
-    require __DIR__ . '/../../templates/salle/form.php';
+        if ($salle === null) {
+            http_response_code(404);
+            require __DIR__ . '/../../templates/error/404.php';
+            return;
+        }
+
+        // Afficher le formulaire
+        require __DIR__ . '/../../templates/salle/form.php';
     }
 
     // Modifier une salle
@@ -89,6 +101,12 @@ class SalleController
     {
     // Récupérer la salle
     $salle = $this->salleRepository->retrouver($id);
+
+    if ($salle === null) {
+        http_response_code(404);
+        require __DIR__ . '/../../templates/error/404.php';
+        return;
+    }
 
     // Récupérer les données du formulaire
     $data = $_POST;
@@ -110,7 +128,7 @@ class SalleController
     $salle->batiment = $data['batiment'];
     $salle->capacite = (int) $data['capacite'];
     $salle->type = $data['type'];
-    $salle->active = (bool) $data['active'];
+    $salle->active = filter_var($data['active'], FILTER_VALIDATE_BOOLEAN);
 
     // Enregistrer les modifications
     $this->salleRepository->enregistrer($salle);

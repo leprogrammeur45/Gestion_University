@@ -14,9 +14,9 @@ CREATE TABLE reservations (
     date_fin DATETIME NOT NULL,
 
     statut ENUM(
-        'confirmée',
-        'annulée'
-    ) NOT NULL DEFAULT 'confirmée',
+        'confirmee',
+        'annulee'
+    ) NOT NULL DEFAULT 'confirmee',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

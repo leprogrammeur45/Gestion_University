@@ -6,6 +6,7 @@ use App\Model\Reservation;
 
 class ReservationRepository implements ReservationRepositoryInterface
 {
+    /** Accède aux réservations avec Eloquent. */
     public function lister(): array
     {
         return Reservation::query()->get()->all();
@@ -24,7 +25,7 @@ class ReservationRepository implements ReservationRepositoryInterface
     {
         return Reservation::query()
             ->where('salle_id', $salleId)
-            ->where('statut', 'confirmée')
+            ->where('statut', 'confirmee')
             ->where('date_debut', '<', $dateFin)
             ->where('date_fin', '>', $dateDebut)
             ->first();
@@ -38,10 +39,10 @@ class ReservationRepository implements ReservationRepositoryInterface
     }
 
     public function annuler(Reservation $reservation): Reservation
-{
-    $reservation->statut = 'annulée';
-    $reservation->save();
+    {
+        $reservation->statut = 'annulee';
+        $reservation->save();
 
-    return $reservation;
-}
+        return $reservation;
+    }
 }

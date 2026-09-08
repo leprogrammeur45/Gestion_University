@@ -34,6 +34,12 @@ class ReservationController
     {
         $reservation = $this->reservationRepository->retrouver($id);
 
+        if ($reservation === null) {
+            http_response_code(404);
+            require __DIR__ . '/../../templates/error/404.php';
+            return;
+        }
+
         require __DIR__ . '/../../templates/reservation/show.php';
     }
 

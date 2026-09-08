@@ -6,6 +6,7 @@ use Respect\Validation\Validator as v;
 
 class ReservationValidator implements ValidatorInterface
 {
+    /** Vérifie la forme des données saisies pour une réservation. */
     public function validate(array $data): ValidationResult
     {
         $errors = [];
@@ -13,7 +14,8 @@ class ReservationValidator implements ValidatorInterface
         // salle_id
         if (
             !isset($data['salle_id']) ||
-            !v::stringType()->digit()->notEmpty()->validate($data['salle_id'])
+            !v::stringType()->digit()->notEmpty()->validate($data['salle_id']) ||
+            (int) $data['salle_id'] < 1
         ) {
             $errors['salle_id'][] =
                 'L\'identifiant de la salle doit être un entier positif.';

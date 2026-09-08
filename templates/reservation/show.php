@@ -3,69 +3,196 @@
 $title = 'Détail de la réservation';
 
 ob_start();
+
 ?>
 
-<h2>Détail de la réservation</h2>
+<div class="page-header">
 
-<p>
-    <strong>ID :</strong>
-    <?= htmlspecialchars((string) $reservation->id) ?>
-</p>
+    <div>
 
-<p>
-    <strong>Salle :</strong>
-    <?= htmlspecialchars((string) $reservation->salle_id) ?>
-</p>
+        <h2>
+            📅 Réservation #<?= htmlspecialchars((string) $reservation->id) ?>
+        </h2>
 
-<p>
-    <strong>Responsable :</strong>
-    <?= htmlspecialchars($reservation->responsable) ?>
-</p>
+        <p>
+            Consultez les informations de cette réservation.
+        </p>
 
-<p>
-    <strong>Email :</strong>
-    <?= htmlspecialchars($reservation->email) ?>
-</p>
+    </div>
 
-<p>
-    <strong>Motif :</strong>
-    <?= htmlspecialchars($reservation->motif) ?>
-</p>
+    <?php if ($reservation->statut === 'confirmee'): ?>
 
-<p>
-    <strong>Date de début :</strong>
-    <?= htmlspecialchars((string) $reservation->date_debut) ?>
-</p>
+        <span class="badge badge-success">
 
-<p>
-    <strong>Date de fin :</strong>
-    <?= htmlspecialchars((string) $reservation->date_fin) ?>
-</p>
+            <span class="badge-dot"></span>
 
-<p>
-    <strong>Statut :</strong>
-    <?= htmlspecialchars($reservation->statut) ?>
-</p>
+            Confirmée
 
-<?php if ($reservation->statut === 'confirmée'): ?>
+        </span>
 
-    <form
-        method="POST"
-        action="/reservations/<?= htmlspecialchars((string) $reservation->id) ?>/cancel"
+    <?php elseif ($reservation->statut === 'annulee'): ?>
+
+        <span class="badge badge-danger">
+
+            <span class="badge-dot"></span>
+
+            Annulée
+
+        </span>
+
+    <?php else: ?>
+
+        <span class="badge badge-neutral">
+
+            <span class="badge-dot"></span>
+
+            <?= htmlspecialchars($reservation->statut) ?>
+
+        </span>
+
+    <?php endif; ?>
+
+</div>
+
+
+<div class="detail-card">
+
+    <div class="detail-card-header">
+
+        <div class="detail-card-icon">
+            📅
+        </div>
+
+        <div>
+
+            <h3>
+                Informations de la réservation
+            </h3>
+
+            <p>
+                Détails concernant l'utilisation de la salle.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="detail-row">
+
+        <span class="label">
+            Salle
+        </span>
+
+        <span class="value">
+            #<?= htmlspecialchars((string) $reservation->salle_id) ?>
+        </span>
+
+    </div>
+
+
+    <div class="detail-row">
+
+        <span class="label">
+            Responsable
+        </span>
+
+        <span class="value">
+            <?= htmlspecialchars($reservation->responsable) ?>
+        </span>
+
+    </div>
+
+
+    <div class="detail-row">
+
+        <span class="label">
+            Email
+        </span>
+
+        <span class="value">
+            <?= htmlspecialchars($reservation->email) ?>
+        </span>
+
+    </div>
+
+
+    <div class="detail-row">
+
+        <span class="label">
+            Motif
+        </span>
+
+        <span class="value">
+            <?= htmlspecialchars($reservation->motif) ?>
+        </span>
+
+    </div>
+
+
+    <div class="detail-row">
+
+        <span class="label">
+            Date de début
+        </span>
+
+        <span class="value">
+            <?= htmlspecialchars((string) $reservation->date_debut) ?>
+        </span>
+
+    </div>
+
+
+    <div class="detail-row">
+
+        <span class="label">
+            Date de fin
+        </span>
+
+        <span class="value">
+            <?= htmlspecialchars((string) $reservation->date_fin) ?>
+        </span>
+
+    </div>
+
+</div>
+
+
+<div class="actions-row">
+
+    <?php if ($reservation->statut === 'confirmee'): ?>
+
+        <form
+            method="POST"
+            action="/reservations/<?= htmlspecialchars((string) $reservation->id) ?>/cancel"
+        >
+
+            <button
+                type="submit"
+                class="btn btn-danger"
+            >
+                Annuler la réservation
+            </button>
+
+        </form>
+
+    <?php endif; ?>
+
+
+    <a
+        href="/reservations"
+        class="btn btn-secondary"
     >
-        <button type="submit">
-            Annuler la réservation
-        </button>
-    </form>
+        ← Retour à la liste
+    </a>
 
-<?php endif; ?>
+</div>
 
-<p>
-    <a href="/reservations">Retour à la liste</a>
-</p>
 
 <?php
 
 $content = ob_get_clean();
 
 require __DIR__ . '/../layout/base.php';
+
+?>

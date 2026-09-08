@@ -1,0 +1,7 @@
+.git/
+.phpunit.cache/
+.idea/
+.vscode/
+*.log
+.DS_Store
+.env

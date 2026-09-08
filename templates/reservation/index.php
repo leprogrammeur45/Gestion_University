@@ -3,100 +3,265 @@
 $title = 'Liste des réservations';
 
 ob_start();
+
 ?>
 
-<h2>Liste des réservations</h2>
+<div class="page-header">
 
-<a href="/reservations/create">Créer une réservation</a>
+    <div>
+
+        <h2>📅 Réservations</h2>
+
+        <p>
+            Consultez et gérez les réservations des salles.
+        </p>
+
+    </div>
+
+    <a
+        href="/reservations/create"
+        class="btn btn-primary"
+    >
+        + Créer une réservation
+    </a>
+
+</div>
+
 
 <?php if (empty($reservations)): ?>
 
-    <p>Aucune réservation disponible.</p>
+    <div class="empty-state">
+
+        <div class="empty-state-icon">
+            📅
+        </div>
+
+        <h3>
+            Aucune réservation
+        </h3>
+
+        <p>
+            Aucune réservation n'est disponible pour le moment.
+        </p>
+
+        <a
+            href="/reservations/create"
+            class="btn btn-primary"
+        >
+            + Créer une réservation
+        </a>
+
+    </div>
 
 <?php else: ?>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Salle</th>
-                <th>Responsable</th>
-                <th>Email</th>
-                <th>Motif</th>
-                <th>Date de début</th>
-                <th>Date de fin</th>
-                <th>Statut</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
+    <div class="card">
 
-        <tbody>
+        <div class="table-header">
 
-        <?php foreach ($reservations as $reservation): ?>
+            <div>
 
-            <tr>
-                <td>
-                    <?= htmlspecialchars((string) $reservation->id) ?>
-                </td>
+                <h3>
+                    Toutes les réservations
+                </h3>
 
-                <td>
-                    <?= htmlspecialchars((string) $reservation->salle_id) ?>
-                </td>
+                <p>
+                    Liste des réservations enregistrées.
+                </p>
 
-                <td>
-                    <?= htmlspecialchars($reservation->responsable) ?>
-                </td>
+            </div>
 
-                <td>
-                    <?= htmlspecialchars($reservation->email) ?>
-                </td>
+            <span class="table-count">
 
-                <td>
-                    <?= htmlspecialchars($reservation->motif) ?>
-                </td>
+                <?= count($reservations) ?>
 
-                <td>
-                    <?= htmlspecialchars((string) $reservation->date_debut) ?>
-                </td>
+                réservation<?= count($reservations) > 1 ? 's' : '' ?>
 
-                <td>
-                    <?= htmlspecialchars((string) $reservation->date_fin) ?>
-                </td>
+            </span>
 
-                <td>
-                    <?= htmlspecialchars($reservation->statut) ?>
-                </td>
+        </div>
 
-                <td>
-                    <a href="/reservations/<?= htmlspecialchars((string) $reservation->id) ?>">
-                        Voir
-                    </a>
 
-                    <?php if ($reservation->statut === 'confirmée'): ?>
+        <div class="table-wrapper">
 
-                        <form
-                            method="POST"
-                            action="/reservations/<?= htmlspecialchars((string) $reservation->id) ?>/cancel"
-                            style="display: inline;"
-                        >
-                            <button type="submit">
-                                Annuler
-                            </button>
-                        </form>
+            <table class="data-table">
 
-                    <?php endif; ?>
-                </td>
-            </tr>
+                <thead>
 
-        <?php endforeach; ?>
+                    <tr>
 
-        </tbody>
-    </table>
+                        <th>Salle</th>
+
+                        <th>Responsable</th>
+
+                        <th>Email</th>
+
+                        <th>Motif</th>
+
+                        <th>Début</th>
+
+                        <th>Fin</th>
+
+                        <th>Statut</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                <?php foreach ($reservations as $reservation): ?>
+
+                    <tr>
+
+                        <td data-label="Salle">
+
+                            <span class="room-reference">
+
+                                #<?= htmlspecialchars((string) $reservation->salle_id) ?>
+
+                            </span>
+
+                        </td>
+
+
+                        <td data-label="Responsable">
+
+                            <strong>
+
+                                <?= htmlspecialchars($reservation->responsable) ?>
+
+                            </strong>
+
+                        </td>
+
+
+                        <td data-label="Email">
+
+                            <?= htmlspecialchars($reservation->email) ?>
+
+                        </td>
+
+
+                        <td data-label="Motif">
+
+                            <span class="reservation-motif">
+
+                                <?= htmlspecialchars($reservation->motif) ?>
+
+                            </span>
+
+                        </td>
+
+
+                        <td data-label="Début">
+
+                            <?= htmlspecialchars((string) $reservation->date_debut) ?>
+
+                        </td>
+
+
+                        <td data-label="Fin">
+
+                            <?= htmlspecialchars((string) $reservation->date_fin) ?>
+
+                        </td>
+
+
+                        <td data-label="Statut">
+
+                            <?php if ($reservation->statut === 'confirmee'): ?>
+
+                                <span class="badge badge-success">
+
+                                    <span class="badge-dot"></span>
+
+                                    Confirmée
+
+                                </span>
+
+                            <?php elseif ($reservation->statut === 'annulee'): ?>
+
+                                <span class="badge badge-danger">
+
+                                    <span class="badge-dot"></span>
+
+                                    Annulée
+
+                                </span>
+
+                            <?php else: ?>
+
+                                <span class="badge badge-neutral">
+
+                                    <span class="badge-dot"></span>
+
+                                    <?= htmlspecialchars($reservation->statut) ?>
+
+                                </span>
+
+                            <?php endif; ?>
+
+                        </td>
+
+
+                        <td data-label="Actions">
+
+                            <div class="table-actions">
+
+                                <a
+                                    href="/reservations/<?= htmlspecialchars((string) $reservation->id) ?>"
+                                    class="btn btn-secondary btn-sm"
+                                >
+                                    Voir
+                                </a>
+
+
+                                <?php if ($reservation->statut === 'confirmee'): ?>
+
+                                    <form
+                                        method="POST"
+                                        action="/reservations/<?= htmlspecialchars((string) $reservation->id) ?>/cancel"
+                                        class="inline-form"
+                                    >
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-danger btn-sm"
+                                        >
+                                            Annuler
+                                        </button>
+
+                                    </form>
+
+                                <?php endif; ?>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                <?php endforeach; ?>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
 
 <?php endif; ?>
+
 
 <?php
 
 $content = ob_get_clean();
 
 require __DIR__ . '/../layout/base.php';
+
+?>

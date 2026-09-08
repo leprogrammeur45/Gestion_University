@@ -1,4 +1,3 @@
-
 # Gestion University — Réservation de salles
 
 Application web de **gestion et de réservation de salles universitaires**, réalisée en **PHP orienté objet** avec **MySQL**.

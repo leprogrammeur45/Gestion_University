@@ -6,6 +6,7 @@ use App\Model\Salle;
 
 class SalleRepository implements SalleRepositoryInterface
 {
+    /** Accède aux salles avec Eloquent. */
     public function lister(): array
     {
         return Salle::query()->get()->all();
