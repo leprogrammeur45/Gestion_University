@@ -2,6 +2,14 @@
 
 $title = 'Créer une réservation';
 
+$errors = $errors ?? [];
+$data = $data ?? [];
+$salles = $salles ?? [];
+
+$fieldError = static function (string $field) use ($errors) {
+    return $errors[$field][0] ?? null;
+};
+
 ob_start();
 
 ?>
@@ -9,14 +17,17 @@ ob_start();
 <div class="page-header">
 
     <div>
+
         <h2>📅 Créer une réservation</h2>
 
         <p>
             Réservez une salle pour une activité universitaire.
         </p>
+
     </div>
 
 </div>
+
 
 <?php if (!empty($errors)): ?>
 
@@ -77,6 +88,10 @@ ob_start();
     <form method="POST" action="/reservations">
 
 
+        <!-- ================================
+             SALLE
+        ================================= -->
+
         <div class="field">
 
             <label for="salle_id">
@@ -111,12 +126,24 @@ ob_start();
 
             </select>
 
+            <?php if ($fieldError('salle_id')): ?>
+
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('salle_id')) ?>
+                </div>
+
+            <?php endif; ?>
+
             <div class="field-hint">
                 Seules les salles actives peuvent être réservées.
             </div>
 
         </div>
 
+
+        <!-- ================================
+             RESPONSABLE
+        ================================= -->
 
         <div class="field">
 
@@ -132,8 +159,20 @@ ob_start();
                 value="<?= htmlspecialchars($data['responsable'] ?? '') ?>"
             >
 
+            <?php if ($fieldError('responsable')): ?>
+
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('responsable')) ?>
+                </div>
+
+            <?php endif; ?>
+
         </div>
 
+
+        <!-- ================================
+             EMAIL
+        ================================= -->
 
         <div class="field">
 
@@ -149,8 +188,20 @@ ob_start();
                 value="<?= htmlspecialchars($data['email'] ?? '') ?>"
             >
 
+            <?php if ($fieldError('email')): ?>
+
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('email')) ?>
+                </div>
+
+            <?php endif; ?>
+
         </div>
 
+
+        <!-- ================================
+             MOTIF
+        ================================= -->
 
         <div class="field">
 
@@ -164,6 +215,14 @@ ob_start();
                 placeholder="Motif de la réservation"
             ><?= htmlspecialchars($data['motif'] ?? '') ?></textarea>
 
+            <?php if ($fieldError('motif')): ?>
+
+                <div class="field-error">
+                    ⚠ <?= htmlspecialchars($fieldError('motif')) ?>
+                </div>
+
+            <?php endif; ?>
+
             <div class="field-hint">
                 Indiquez la raison de l'utilisation de la salle.
             </div>
@@ -171,8 +230,14 @@ ob_start();
         </div>
 
 
+        <!-- ================================
+             DATES
+        ================================= -->
+
         <div class="reservation-dates">
 
+
+            <!-- DATE DEBUT -->
 
             <div class="field">
 
@@ -187,8 +252,18 @@ ob_start();
                     value="<?= htmlspecialchars($data['date_debut'] ?? '') ?>"
                 >
 
+                <?php if ($fieldError('date_debut')): ?>
+
+                    <div class="field-error">
+                        ⚠ <?= htmlspecialchars($fieldError('date_debut')) ?>
+                    </div>
+
+                <?php endif; ?>
+
             </div>
 
+
+            <!-- DATE FIN -->
 
             <div class="field">
 
@@ -203,11 +278,23 @@ ob_start();
                     value="<?= htmlspecialchars($data['date_fin'] ?? '') ?>"
                 >
 
+                <?php if ($fieldError('date_fin')): ?>
+
+                    <div class="field-error">
+                        ⚠ <?= htmlspecialchars($fieldError('date_fin')) ?>
+                    </div>
+
+                <?php endif; ?>
+
             </div>
 
 
         </div>
 
+
+        <!-- ================================
+             INFORMATIONS
+        ================================= -->
 
         <div class="reservation-info">
 
@@ -231,6 +318,10 @@ ob_start();
 
         </div>
 
+
+        <!-- ================================
+             ACTIONS
+        ================================= -->
 
         <div class="form-actions">
 
@@ -261,4 +352,5 @@ ob_start();
 $content = ob_get_clean();
 
 require __DIR__ . '/../layout/base.php';
+
 ?>
