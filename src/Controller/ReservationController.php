@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\DTO\CreerReservationDTO;
+use App\Exception\ReservationIntrouvableException;
+use App\Exception\SalleIndisponibleException;
 use App\Repository\ReservationRepositoryInterface;
 use App\Repository\SalleRepositoryInterface;
 use App\Service\AnnulerReservationService;
@@ -24,7 +26,12 @@ class ReservationController
     // Afficher la liste des réservations
     public function index(): void
     {
-        $reservations = $this->reservationRepository->lister();
+        $salleId = isset($_GET['salle_id']) && ctype_digit((string) $_GET['salle_id'])
+            ? (int) $_GET['salle_id']
+            : null;
+
+        $reservations = $this->reservationRepository->lister($salleId);
+        $salles = $this->salleRepository->lister();
 
         require __DIR__ . '/../../templates/reservation/index.php';
     }
@@ -85,21 +92,34 @@ class ReservationController
             dateFin: $dateFin
         );
 
-        // Créer la réservation
-        $this->creerReservationService->executer($dto);
+        try {
+            $this->creerReservationService->executer($dto);
+        } catch (SalleIndisponibleException|\InvalidArgumentException $exception) {
+            $errors = ['general' => [$exception->getMessage()]];
+            $salles = $this->salleRepository->lister();
+
+            require __DIR__ . '/../../templates/reservation/form.php';
+            return;
+        }
 
         // Rediriger vers la liste
-        header('Location: /reservations');
+        header('Location: /reservations?success=reservation_created');
         exit;
     }
 
     // Annuler une réservation
     public function cancel(int $id): void
     {
-        $this->annulerReservationService->executer($id);
+        try {
+            $this->annulerReservationService->executer($id);
+        } catch (ReservationIntrouvableException) {
+            http_response_code(404);
+            require __DIR__ . '/../../templates/error/404.php';
+            return;
+        }
 
         // Rediriger vers la liste
-        header('Location: /reservations');
+        header('Location: /reservations?success=reservation_cancelled');
         exit;
     }
 }

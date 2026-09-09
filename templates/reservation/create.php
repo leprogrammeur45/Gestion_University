@@ -1,6 +1,7 @@
 <?php
 
 $title = 'Créer une réservation';
+$salles = $salles ?? [];
 
 ob_start();
 

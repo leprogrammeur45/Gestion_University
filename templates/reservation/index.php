@@ -1,6 +1,7 @@
 <?php
 
 $title = 'Liste des réservations';
+$salles = $salles ?? [];
 
 ob_start();
 
@@ -26,6 +27,33 @@ ob_start();
     </a>
 
 </div>
+
+<?php if (($_GET['success'] ?? '') === 'reservation_created'): ?>
+    <div class="alert alert-success">La réservation a été créée avec succès.</div>
+<?php elseif (($_GET['success'] ?? '') === 'reservation_cancelled'): ?>
+    <div class="alert alert-success">La réservation a été annulée avec succès.</div>
+<?php endif; ?>
+
+<form method="GET" action="/reservations" class="filter-form">
+    <label for="salle_id">Filtrer par salle</label>
+    <select id="salle_id" name="salle_id">
+        <option value="">Toutes les salles</option>
+        <?php foreach ($salles as $salle): ?>
+            <option
+                value="<?= htmlspecialchars((string) $salle->id) ?>"
+                <?= ((string) ($_GET['salle_id'] ?? '') === (string) $salle->id) ? 'selected' : '' ?>
+            >
+                <?= htmlspecialchars($salle->nom) ?>
+                -
+                <?= htmlspecialchars($salle->batiment) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+    <button type="submit" class="btn btn-secondary">Filtrer</button>
+    <?php if (isset($_GET['salle_id']) && $_GET['salle_id'] !== ''): ?>
+        <a href="/reservations" class="btn btn-secondary">Réinitialiser</a>
+    <?php endif; ?>
+</form>
 
 
 <?php if (empty($reservations)): ?>

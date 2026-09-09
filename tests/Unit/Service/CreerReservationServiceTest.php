@@ -306,5 +306,40 @@ class CreerReservationServiceTest extends TestCase
             $reservationRepository
         ))->executer($dto);
     }
+
+    public function testAccepteUneReservationVoisineSansChevauchement(): void
+    {
+        $salleRepository = $this->createStub(SalleRepositoryInterface::class);
+        $salleRepository->method('retrouver')
+            ->willReturn(new Salle(['active' => true]));
+
+        $reservationRepository = $this->createMock(
+            ReservationRepositoryInterface::class
+        );
+        $reservationRepository->expects($this->once())
+            ->method('rechercherConflit')
+            ->willReturn(null);
+        $reservationRepository->expects($this->once())
+            ->method('enregistrer')
+            ->willReturn(new Reservation());
+
+        $dateDebut = new DateTimeImmutable('+1 day 12:00');
+        $dto = new CreerReservationDTO(
+            1,
+            'Mamadou Diouf',
+            'mamadou@example.com',
+            'Réunion pédagogique',
+            $dateDebut,
+            $dateDebut->modify('+2 hours')
+        );
+
+        $this->assertInstanceOf(
+            Reservation::class,
+            (new CreerReservationService(
+                $salleRepository,
+                $reservationRepository
+            ))->executer($dto)
+        );
+    }
 }
 

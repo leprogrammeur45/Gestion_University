@@ -76,7 +76,7 @@ class SalleController
         $this->creerSalleService->executer($dto);
 
         // Rediriger vers la liste
-        header('Location: /salles');
+        header('Location: /salles?success=salle_created');
         exit;
     }
 
@@ -134,7 +134,7 @@ class SalleController
     $this->salleRepository->enregistrer($salle);
 
     // Rediriger vers la liste des salles
-    header('Location: /salles');
+    header('Location: /salles?success=salle_updated');
     exit;
     }
 }

@@ -6,38 +6,64 @@ use App\Repository\ReservationRepository;
 use App\Repository\ReservationRepositoryInterface;
 use App\Repository\SalleRepository;
 use App\Repository\SalleRepositoryInterface;
-use DI\ContainerBuilder;
+use App\Service\AnnulerReservationService;
+use App\Service\CreerReservationService;
+use App\Validation\ReservationValidator;
+use App\Validation\SalleValidator;
+use function DI\autowire;
+use function DI\factory;
+use FastRoute\Dispatcher;
+use Illuminate\Database\Capsule\Manager as Capsule;
+use PapaMamadouDiouf\GestionUniversity\Application;
+use Psr\Container\ContainerInterface;
+use function FastRoute\simpleDispatcher;
 
-require_once __DIR__ . '/../vendor/autoload.php';
+return [
 
-$builder = new ContainerBuilder();
+    SalleRepositoryInterface::class => autowire(
+        SalleRepository::class
+    ),
 
-$builder->addDefinitions([
-    SalleRepositoryInterface::class => function () {
-        return new SalleRepository();
-    },
+    ReservationRepositoryInterface::class => autowire(
+        ReservationRepository::class
+    ),
 
-    ReservationRepositoryInterface::class => function () {
-        return new ReservationRepository();
-    },
+    SalleValidator::class => autowire(),
 
-    SalleController::class => function ($container) {
-        return new SalleController(
-            $container->get(SalleRepositoryInterface::class),
-            $container->get(\App\Service\CreerSalleService::class),
-            $container->get(\App\Validation\SalleValidator::class)
-        );
-    },
+    ReservationValidator::class => autowire(),
 
-    ReservationController::class => function ($container) {
-        return new ReservationController(
-            $container->get(ReservationRepositoryInterface::class),
-            $container->get(SalleRepositoryInterface::class),
-            $container->get(\App\Service\CreerReservationService::class),
-            $container->get(\App\Service\AnnulerReservationService::class),
-            $container->get(\App\Validation\ReservationValidator::class)
-        );
-    },
-]);
+    CreerReservationService::class => autowire(),
 
-return $builder->build();
+    AnnulerReservationService::class => autowire(),
+
+    SalleController::class => autowire(),
+
+    ReservationController::class => autowire(),
+
+    Capsule::class => factory(
+        function (): Capsule {
+            return require dirname(__DIR__) . '/config/database.php';
+        }
+    ),
+
+    Dispatcher::class => factory(
+        function (): Dispatcher {
+            return simpleDispatcher(
+                require dirname(__DIR__) . '/routes/web.php'
+            );
+        }
+    ),
+
+    Application::class => factory(
+        function (
+            Dispatcher $dispatcher,
+            ContainerInterface $container
+        ): Application {
+            return new Application(
+                $dispatcher,
+                fn (string $controllerClass) => $container->get($controllerClass)
+            );
+        }
+    ),
+
+];

@@ -1,5 +1,7 @@
 # Architecture du projet — Gestion University
 
+<!-- markdownlint-disable MD001 MD024 MD025 -->
+
 ## 1. Présentation générale
 
 **Gestion University** est une application Web développée en PHP orienté objet permettant de gérer les salles d'une université ainsi que leurs réservations.
@@ -793,7 +795,7 @@ La recherche des conflits appartient au repository :
 ```php
 return Reservation::query()
     ->where('salle_id', $salleId)
-    ->where('statut', 'confirmée')
+    ->where('statut', 'confirmee')
     ->where('date_debut', '<', $dateFin)
     ->where('date_fin', '>', $dateDebut)
     ->first();

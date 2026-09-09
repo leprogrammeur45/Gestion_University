@@ -33,4 +33,32 @@ class SalleValidatorTest extends TestCase
         $this->assertFalse($result->isValid());
         $this->assertArrayHasKey('capacite', $result->errors());
     }
+
+    public function testRefuseUneCapaciteNegative(): void
+    {
+        $result = (new SalleValidator())->validate([
+            'nom' => 'Salle B12',
+            'batiment' => 'Bâtiment B',
+            'capacite' => '-1',
+            'type' => 'cours',
+            'active' => '1',
+        ]);
+
+        $this->assertFalse($result->isValid());
+        $this->assertArrayHasKey('capacite', $result->errors());
+    }
+
+    public function testRefuseUnTypeInconnu(): void
+    {
+        $result = (new SalleValidator())->validate([
+            'nom' => 'Salle B12',
+            'batiment' => 'Bâtiment B',
+            'capacite' => '40',
+            'type' => 'inconnu',
+            'active' => '1',
+        ]);
+
+        $this->assertFalse($result->isValid());
+        $this->assertArrayHasKey('type', $result->errors());
+    }
 }

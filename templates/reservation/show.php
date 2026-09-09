@@ -2,6 +2,10 @@
 
 $title = 'Détail de la réservation';
 
+if (!isset($reservation)) {
+    throw new \LogicException('Une réservation est requise pour afficher cette page.');
+}
+
 ob_start();
 
 ?>

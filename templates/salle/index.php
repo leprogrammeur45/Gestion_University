@@ -27,6 +27,12 @@ ob_start();
 
 </div>
 
+<?php if (($_GET['success'] ?? '') === 'salle_created'): ?>
+    <div class="alert alert-success">La salle a été ajoutée avec succès.</div>
+<?php elseif (($_GET['success'] ?? '') === 'salle_updated'): ?>
+    <div class="alert alert-success">La salle a été modifiée avec succès.</div>
+<?php endif; ?>
+
 
 <?php if (empty($salles)): ?>
 

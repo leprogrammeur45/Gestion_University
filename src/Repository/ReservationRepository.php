@@ -7,9 +7,15 @@ use App\Model\Reservation;
 class ReservationRepository implements ReservationRepositoryInterface
 {
     /** Accède aux réservations avec Eloquent. */
-    public function lister(): array
+    public function lister(?int $salleId = null): array
     {
-        return Reservation::query()->get()->all();
+        $query = Reservation::query();
+
+        if ($salleId !== null) {
+            $query->where('salle_id', $salleId);
+        }
+
+        return $query->get()->all();
     }
 
     public function retrouver(int $id): ?Reservation

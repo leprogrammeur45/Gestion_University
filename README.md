@@ -1,5 +1,7 @@
 # Gestion University — Réservation de salles
 
+<!-- markdownlint-disable MD001 MD024 MD025 MD036 -->
+
 Application web de **gestion et de réservation de salles universitaires**, réalisée en **PHP orienté objet** avec **MySQL**.
 
 Le projet a pour objectif de permettre à une université de gérer ses salles et de contrôler les réservations en appliquant les règles métier définies dans le cahier des charges.
@@ -163,9 +165,12 @@ updated_at
 Les statuts possibles sont :
 
 ```text
-confirmée
-annulée
+confirmee
+annulee
 ```
+
+Ces valeurs techniques sont affichées sous les libellés français
+« Confirmée » et « Annulée » dans l'interface.
 
 La colonne `salle_id` est une clé étrangère vers :
 
@@ -444,6 +449,13 @@ GET  /reservations/create
 POST /reservations
 GET  /reservations/{id}
 POST /reservations/{id}/cancel
+```
+
+La liste des réservations peut être filtrée par salle avec le paramètre
+`salle_id` :
+
+```text
+GET /reservations?salle_id=2
 ```
 
 Une URL inconnue retourne une réponse HTTP :
@@ -865,7 +877,9 @@ La commande prévue pour exécuter PHPUnit est :
 vendor/bin/phpunit
 ```
 
-Les tests automatisés font partie des livrables du projet et doivent couvrir notamment les règles métier et les composants importants de l'application.
+Les tests unitaires couvrent les validateurs et les règles métier de création.
+Les tests d'intégration couvrent Eloquent, les relations, les conflits et
+l'annulation d'une réservation.
 
 ---
 

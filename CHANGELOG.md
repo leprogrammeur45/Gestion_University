@@ -1,5 +1,7 @@
 # Changelog
 
+<!-- markdownlint-disable MD024 -->
+
 Toutes les modifications importantes de ce projet sont documentées dans ce fichier.
 
 Le format de ce fichier s'inspire de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
@@ -14,6 +16,8 @@ Le format de ce fichier s'inspire de [Keep a Changelog](https://keepachangelog.c
 * Adaptation de la validation de `salle_id` au format réellement envoyé par le formulaire HTML (`<select>`).
 * Adaptation de la validation des champs `date_debut` et `date_fin` au format produit par `<input type="datetime-local">`.
 * Conservation des données saisies lors du retour au formulaire en cas d'erreur de validation.
+* Gestion HTTP des exceptions métier lors de la création et de l'annulation d'une réservation.
+* Ajout du filtrage des réservations par salle et des messages de succès.
 
 ### Scénarios de recette vérifiés
 
@@ -28,7 +32,9 @@ Les principaux scénarios fonctionnels prévus par le cahier des charges ont ét
 * Affichage d'une erreur 404 pour une URL inconnue.
 * Affichage d'une erreur 405 pour une méthode HTTP non autorisée avec l'en-tête `Allow`.
 
-> Remarque : la gestion HTTP des exceptions métier reste à améliorer afin d'éviter l'affichage d'une trace d'exception lors de certaines erreurs métier. Cette amélioration sera traitée dans une étape ultérieure.
+La gestion HTTP des exceptions métier est maintenant assurée par les contrôleurs :
+les erreurs de réservation sont réaffichées dans le formulaire et une réservation
+inexistante renvoie une page `404`.
 
 ---
 

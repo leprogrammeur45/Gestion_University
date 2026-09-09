@@ -6,7 +6,7 @@ use App\Model\Reservation;
 
 interface ReservationRepositoryInterface
 {
-    public function lister(): array;
+    public function lister(?int $salleId = null): array;
 
     public function retrouver(int $id): ?Reservation;
 
