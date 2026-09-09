@@ -924,6 +924,27 @@ Le routing FastRoute correspond au tag :
 v0.10.0
 ```
 
+## Images Docker par tag
+
+Chaque tag `v*` déclenche automatiquement le workflow
+`.github/workflows/docker-tag-image.yml`. Une image est construite depuis le
+contenu exact du tag et publiée dans GitHub Container Registry avec les tags :
+
+```text
+ghcr.io/leprogrammeur45/gestion_university:v1.0.0
+ghcr.io/leprogrammeur45/gestion_university:latest
+```
+
+Le script local construit également une image pour chaque tag existant :
+
+```bash
+IMAGE=papamamadoudiouf/gestion-university \
+     ./docker/docker-release-all.sh
+```
+
+Avant d'utiliser le script local, se connecter au registre choisi avec
+`docker login`. Le nom de l'image peut être remplacé par la variable `IMAGE`.
+
 Un correctif concernant la validation des données provenant du formulaire a ensuite été enregistré avec le commit :
 
 ```text

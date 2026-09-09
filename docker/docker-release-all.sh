@@ -2,7 +2,7 @@
 
 set -e
 
-IMAGE="papamamadoudiouf/gestion-university"
+IMAGE="${IMAGE:-papamamadoudiouf/gestion-university}"
 REPO_ROOT=$(pwd)
 WORKTREE_DIR="/tmp/gestion-university-release"
 
@@ -18,8 +18,16 @@ if [ ! -f "$DOCKERFILE_SOURCE" ]; then
     exit 1
 fi
 
+cleanup() {
+    if [ -d "$WORKTREE_DIR" ]; then
+        git worktree remove --force "$WORKTREE_DIR" >/dev/null 2>&1 || true
+    fi
+}
+
+trap cleanup EXIT
+
 # Nettoyer un éventuel ancien worktree
-rm -rf "$WORKTREE_DIR"
+cleanup
 
 for TAG in $(git tag --sort=version:refname); do
 
@@ -53,7 +61,7 @@ for TAG in $(git tag --sort=version:refname); do
         echo "Échec du build pour $TAG."
         ECHECS="$ECHECS $TAG"
 
-        git worktree remove --force "$WORKTREE_DIR"
+        cleanup
         continue
     fi
 
@@ -75,7 +83,7 @@ for TAG in $(git tag --sort=version:refname); do
     REUSSIS="$REUSSIS $TAG"
 
     # Supprimer le worktree temporaire
-    git worktree remove --force "$WORKTREE_DIR"
+    cleanup
 done
 
 # Déterminer le dernier tag construit avec succès
