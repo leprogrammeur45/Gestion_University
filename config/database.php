@@ -5,8 +5,13 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$dotenv = Dotenv::createImmutable(dirname(__DIR__));
-$dotenv->load();
+$basePath = dirname(__DIR__);
+
+$dotenv = Dotenv::createImmutable($basePath);
+
+if (is_file($basePath . '/.env')) {
+    $dotenv->load();
+}
 
 $capsule = new Capsule();
 
@@ -27,16 +32,3 @@ $capsule->bootEloquent();
 
 return $capsule;
 
-
-
-
-
-
-
-
-
-
-//Dotenv recupere les informations .env
-//prepare la connexion avec eloquent
-//rend la configuration accessible globalement
-//demarre eloquent
