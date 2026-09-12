@@ -1,7 +1,5 @@
 # Architecture du projet — Gestion University
 
-<!-- markdownlint-disable MD001 MD024 MD025 -->
-
 ## 1. Présentation générale
 
 **Gestion University** est une application Web développée en PHP orienté objet permettant de gérer les salles d'une université ainsi que leurs réservations.
@@ -21,64 +19,69 @@ L'application permet notamment de :
 * empêcher la réservation d'une salle inactive ;
 * contrôler la durée et les dates d'une réservation.
 
-L'application utilise une architecture organisée en plusieurs couches afin de séparer les responsabilités.
+L'application utilise une architecture en plusieurs couches afin de séparer clairement les responsabilités.
 
 ---
 
 # 2. Architecture globale
 
-L'architecture générale du projet peut être représentée ainsi :
+L'architecture générale est la suivante :
 
 ```text
                          Navigateur
-                             │
-                             ▼
-                    public/index.php
+                              │
+                              ▼
+                     public/index.php
                      Front Controller
-                             │
-                             ▼
-                    FastRoute / Router
-                             │
-                             ▼
-                       Controller
-                    ┌────────┴────────┐
-                    │                 │
-                    ▼                 ▼
-                Validator           Service
-                                      │
-                                      ▼
-                                  Repository
-                                      │
-                                      ▼
-                                    Model
-                                      │
-                                      ▼
-                                   Eloquent
-                                      │
-                                      ▼
-                                    MySQL
+                              │
+                              ▼
+                         FastRoute
+                           Router
+                              │
+                              ▼
+                        Controller
+                              │
+              ┌───────────────┼────────────────┐
+              │               │                │
+              ▼               ▼                ▼
+          Validator          DTO             View
+              │
+              ▼
+           Service
+              │
+              ▼
+         Repository
+              │
+              ▼
+        Model Eloquent
+              │
+              ▼
+            MySQL
 ```
 
-Les vues sont utilisées par les contrôleurs pour produire les pages HTML :
+Chaque couche possède une responsabilité précise.
+
+L'objectif est d'éviter qu'un seul composant contienne simultanément :
 
 ```text
-Controller
-    │
-    ├──────────────► View / Template
-    │
-    └──────────────► Service
+HTTP
++
+validation
++
+logique métier
++
+SQL
++
+affichage
 ```
-
-L'objectif principal est d'éviter qu'une seule classe fasse tout le travail.
 
 ---
 
 # 3. Organisation du projet
 
-L'application suit principalement cette organisation :
-
 ```text
-reservation-salles/
+Gestion_University/
+
 │
 ├── config/
 │   ├── container.php
@@ -141,113 +144,80 @@ V = View
 C = Controller
 ```
 
-Le modèle MVC sépare l'application en trois responsabilités principales.
+MVC sépare principalement :
 
-### Model
+* les données ;
+* l'affichage ;
+* la gestion des requêtes HTTP.
 
-Le modèle représente les données et leur interaction avec la base de données.
+---
+
+## 4.2 Model
+
+Le Model représente les données manipulées par l'application.
 
 Dans notre projet :
 
 ```text
 src/Model/
+
 ├── Salle.php
 └── Reservation.php
 ```
 
-### View
+Ces classes sont des **Models Eloquent**.
 
-La vue est responsable de l'affichage HTML.
+Elles représentent notamment les tables :
+
+```text
+salles
+reservations
+```
+
+---
+
+## 4.3 View
+
+La View est responsable de la présentation HTML.
 
 Dans notre projet :
 
 ```text
 templates/
+
+├── layout/
 ├── salle/
-└── reservation/
+├── reservation/
+└── error/
 ```
 
-### Controller
+Une View ne doit pas contenir de logique métier.
 
-Le contrôleur reçoit la requête et coordonne les différentes couches.
+---
 
-Dans notre projet :
+## 4.4 Controller
+
+Le Controller reçoit la requête HTTP et coordonne les différentes couches.
+
+Exemple :
 
 ```text
 src/Controller/
+
 ├── SalleController.php
 └── ReservationController.php
 ```
 
----
+Le Controller :
 
-## 4.2 Flux MVC
+* récupère les données HTTP ;
+* appelle le Validator ;
+* construit le DTO ;
+* appelle le Service ;
+* prépare les données pour la View ;
+* effectue les redirections HTTP.
 
-Pour une création de réservation :
-
-```text
-Utilisateur
-     │
-     ▼
-public/index.php
-     │
-     ▼
-FastRoute
-     │
-     ▼
-ReservationController
-     │
-     ▼
-ReservationValidator
-     │
-     ▼
-CreerReservationDTO
-     │
-     ▼
-CreerReservationService
-     │
-     ▼
-ReservationRepository
-     │
-     ▼
-Reservation Model
-     │
-     ▼
-MySQL
-```
-
----
-
-## 4.3 Avantage
-
-MVC permet de séparer :
-
-* la présentation ;
-* la logique HTTP ;
-* les données.
-
-Cela rend le projet plus facile à maintenir et à faire évoluer.
-
-## 4.4 Limite
-
-MVC ne suffit pas à organiser toute l'application.
-
-Un gros contrôleur pourrait toujours contenir :
-
-* validation ;
-* logique métier ;
-* requêtes SQL ;
-* affichage.
-
-C'est pourquoi notre architecture ajoute d'autres couches :
-
-```text
-Validator
-DTO
-Repository
-Service
-DI Container
-```
+Il ne doit pas contenir les règles métier complexes.
 
 ---
 
@@ -255,46 +225,39 @@ DI Container
 
 ## 5.1 Définition
 
-Le **Front Controller** est un point d'entrée unique pour les requêtes HTTP.
+Le Front Controller est le point d'entrée unique de l'application.
 
-Dans notre application :
-
-```text
-public/index.php
-```
-
-est le Front Controller.
-
-Toutes les requêtes passent par lui.
-
----
-
-## 5.2 Exemple
-
-Une requête :
-
-```text
-GET /salles
-```
-
-arrive dans :
+Dans notre projet :
 
 ```text
 public/index.php
 ```
 
-Le fichier initialise ensuite :
-
-* Composer ;
-* Eloquent ;
-* le conteneur DI ;
-* le routeur.
-
-Puis il demande au routeur quelle action doit être exécutée.
+Toutes les requêtes HTTP passent par ce fichier.
 
 ---
 
-## 5.3 Extrait représentatif
+## 5.2 Responsabilités
+
+Le Front Controller initialise notamment :
+
+```text
+Composer
+    ↓
+Configuration
+    ↓
+Eloquent
+    ↓
+Container DI
+    ↓
+Router
+```
+
+Puis il transmet la requête au routeur.
+
+---
+
+## 5.3 Exemple
 
 ```php
 $dispatcher = simpleDispatcher(
@@ -303,21 +266,12 @@ $dispatcher = simpleDispatcher(
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
 
-$uri = $_SERVER['REQUEST_URI'];
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
 ```
 
----
-
-## 5.4 Avantages
-
-Le Front Controller permet :
-
-* d'avoir un point d'entrée unique ;
-* de centraliser le routage ;
-* de centraliser l'initialisation de l'application ;
-* d'éviter plusieurs fichiers PHP publics servant directement de contrôleurs.
+Le Front Controller ne doit pas contenir la logique métier.
 
 ---
 
@@ -325,9 +279,9 @@ Le Front Controller permet :
 
 ## 6.1 Définition
 
-Le routeur détermine quelle action doit être exécutée pour une URL donnée.
+Le Router détermine quelle action doit être exécutée pour une URL donnée.
 
-Nous utilisons :
+Notre application utilise :
 
 ```text
 nikic/fast-route
@@ -355,16 +309,13 @@ Cela signifie :
 
 ```text
 GET /salles
-      │
-      ▼
+      ↓
 SalleController::index()
 ```
 
 ---
 
-## 6.3 Routes dynamiques
-
-Nous avons également des routes dynamiques :
+## 6.3 Route dynamique
 
 ```php
 $r->addRoute(
@@ -374,13 +325,19 @@ $r->addRoute(
 );
 ```
 
-Par exemple :
+Ainsi :
 
 ```text
 GET /salles/2
 ```
 
-appelle :
+permet de récupérer :
+
+```text
+id = 2
+```
+
+puis d'appeler :
 
 ```php
 SalleController::show(2);
@@ -388,21 +345,16 @@ SalleController::show(2);
 
 ---
 
-## 6.4 Gestion des erreurs HTTP
+## 6.4 Erreurs HTTP
 
-Le routeur gère également :
+Le Router permet également de gérer :
 
 ```text
 404 Not Found
-```
-
-et :
-
-```text
 405 Method Not Allowed
 ```
 
-Pour une méthode interdite, l'application fournit également :
+Pour une méthode HTTP interdite, l'application peut également retourner :
 
 ```http
 Allow: GET, POST
@@ -410,19 +362,11 @@ Allow: GET, POST
 
 ---
 
-## 6.5 Avantage
-
-Le routage est séparé du contrôleur.
-
-Les URLs ne sont donc pas codées directement dans chaque contrôleur.
-
----
-
 # 7. Validator
 
 ## 7.1 Définition
 
-Le Validator vérifie que les données reçues respectent les règles de validation avant leur utilisation.
+Le Validator vérifie que les données reçues respectent les contraintes de validation.
 
 Notre couche :
 
@@ -441,83 +385,65 @@ ReservationValidator
 
 ---
 
-## 7.2 Exemple
+## 7.2 Responsabilité
 
-Dans `ReservationController` :
-
-```php
-$data = $_POST;
-
-$result = $this->reservationValidator->validate($data);
-
-if (!$result->isValid()) {
-    $errors = $result->errors();
-
-    require __DIR__ . '/../../templates/reservation/form.php';
-
-    return;
-}
-```
-
-Le contrôleur ne fait donc pas lui-même toutes les règles de validation.
-
----
-
-## 7.3 Validation d'une réservation
-
-Les données contrôlées comprennent notamment :
-
-* `salle_id` ;
-* `responsable` ;
-* `email` ;
-* `motif` ;
-* `date_debut` ;
-* `date_fin`.
-
-La validation utilise :
-
-```text
-respect/validation
-```
-
----
-
-## 7.4 Validation HTTP et logique métier
-
-Il est important de distinguer deux niveaux.
-
-### Validation des données
+Le Validator vérifie les données entrantes.
 
 Exemple :
 
 ```text
+nom renseigné ?
+capacite valide ?
 email valide ?
-motif suffisamment long ?
 date correctement formatée ?
+motif suffisamment long ?
 ```
 
-Cette responsabilité appartient au Validator.
+Il ne doit pas décider si une réservation est autorisée selon les règles métier.
 
-### Validation métier
+---
 
-Exemple :
+# 8. Validation des données et validation métier
+
+Il faut distinguer deux niveaux.
+
+## 8.1 Validation des données
+
+Elle appartient au Validator.
+
+Exemples :
+
+```text
+email valide
+nom non vide
+motif entre 5 et 255 caractères
+date correctement formatée
+capacite numérique
+```
+
+---
+
+## 8.2 Validation métier
+
+Elle appartient au Service.
+
+Exemples :
 
 ```text
 la salle existe-t-elle ?
 la salle est-elle active ?
-la réservation chevauche-t-elle une autre réservation ?
+la date de début est-elle dans le futur ?
 la durée dépasse-t-elle quatre heures ?
+la salle est-elle déjà réservée ?
 ```
-
-Cette responsabilité appartient au Service.
 
 Cette séparation est essentielle.
 
 ---
 
-# 8. DTO
+# 9. DTO
 
-## 8.1 Définition
+## 9.1 Définition
 
 DTO signifie :
 
@@ -525,33 +451,33 @@ DTO signifie :
 Data Transfer Object
 ```
 
-Un DTO est un objet utilisé pour transporter des données structurées entre différentes couches de l'application.
+Un DTO transporte des données structurées et typées entre différentes couches.
 
 ---
 
-## 8.2 DTO de salle
-
-Nous avons :
+## 9.2 DTO de création d'une salle
 
 ```text
 App\DTO\CreerSalleDTO
 ```
 
-Il contient :
+Il contient notamment :
 
 ```php
 public readonly string $nom;
+
 public readonly string $batiment;
+
 public readonly int $capacite;
+
 public readonly string $type;
+
 public readonly bool $active;
 ```
 
 ---
 
-## 8.3 DTO de réservation
-
-Nous avons :
+## 9.3 DTO de création d'une réservation
 
 ```text
 App\DTO\CreerReservationDTO
@@ -561,276 +487,49 @@ Il contient notamment :
 
 ```php
 public readonly int $salleId;
+
 public readonly string $responsable;
+
 public readonly string $email;
+
 public readonly string $motif;
+
 public readonly DateTimeImmutable $dateDebut;
+
 public readonly DateTimeImmutable $dateFin;
 ```
 
 ---
 
-## 8.4 Pourquoi utiliser un DTO ?
+## 9.4 Flux Validator → DTO
 
-Le DTO permet de transformer les données HTTP :
+Le flux correct est :
 
 ```text
 $_POST
+   ↓
+Validator
+   ↓
+Données valides
+   ↓
+DTO
+   ↓
+Service
 ```
 
-en données structurées :
+Le Validator valide les données.
 
-```text
-CreerReservationDTO
-```
+Le Controller transforme ensuite les données validées en DTO.
 
-Le service reçoit ainsi un objet clair et typé.
+Le Service reçoit le DTO.
 
 ---
 
-## 8.5 Avantage
-
-Le Service ne dépend pas directement de `$_POST`.
-
-Il reçoit :
-
-```php
-CreerReservationDTO
-```
-
-au lieu de :
-
-```php
-$_POST
-```
-
-Cela améliore :
-
-* le typage ;
-* la lisibilité ;
-* les tests ;
-* la séparation des responsabilités.
-
----
-
-# 9. ORM
-
-## 9.1 Définition
-
-ORM signifie :
-
-```text
-Object-Relational Mapping
-```
-
-Un ORM permet de représenter les données relationnelles sous forme d'objets PHP.
-
-Notre ORM est :
-
-```text
-Eloquent
-```
-
-fourni par :
-
-```text
-illuminate/database
-```
-
----
-
-## 9.2 Sans ORM
-
-Sans ORM, on pourrait écrire :
-
-```php
-SELECT * FROM salles WHERE id = ?
-```
-
-puis transformer manuellement le résultat en objet.
-
----
-
-## 9.3 Avec Eloquent
-
-Nous pouvons écrire :
-
-```php
-$salle = Salle::find($id);
-```
-
-Eloquent s'occupe de la communication avec la base de données.
-
----
-
-## 9.4 Avantage
-
-L'ORM permet de travailler principalement avec des objets PHP :
-
-```text
-Salle
-Reservation
-```
-
-plutôt qu'avec des tableaux de résultats SQL.
-
----
-
-## 9.5 Limites
-
-Un ORM peut :
-
-* masquer la complexité SQL ;
-* produire des requêtes inefficaces si mal utilisé ;
-* encourager l'utilisation excessive de fonctionnalités magiques ;
-* rendre certaines optimisations SQL plus complexes.
-
-Il faut donc connaître SQL même lorsque l'on utilise Eloquent.
-
----
-
-# 10. Active Record
+# 10. Service
 
 ## 10.1 Définition
 
-Eloquent utilise principalement le pattern **Active Record**.
-
-Un modèle représente à la fois :
-
-* les données ;
-* certaines opérations de persistance.
-
-Par exemple :
-
-```php
-$salle = new Salle();
-
-$salle->nom = 'Salle B20';
-
-$salle->save();
-```
-
-L'objet `Salle` sait donc comment être enregistré par Eloquent.
-
----
-
-## 10.2 Exemple dans notre projet
-
-Dans `SalleRepository` :
-
-```php
-public function enregistrer(Salle $salle): Salle
-{
-    $salle->save();
-
-    return $salle;
-}
-```
-
-Le repository délègue ici la persistance à Eloquent.
-
----
-
-## 10.3 Avantage
-
-Active Record est :
-
-* simple ;
-* rapide à utiliser ;
-* adapté aux applications CRUD ;
-* bien intégré à Eloquent.
-
----
-
-## 10.4 Limite
-
-Le modèle possède une responsabilité supplémentaire : la persistance.
-
-Cela peut être moins adapté à des domaines métier très complexes.
-
-C'est notamment pour cela que notre architecture ajoute les Services et Repositories.
-
----
-
-# 11. Repository
-
-## 11.1 Définition
-
-Le Repository encapsule l'accès aux données.
-
-Notre couche :
-
-```text
-src/Repository/
-```
-
-contient :
-
-```text
-SalleRepositoryInterface
-SalleRepository
-ReservationRepositoryInterface
-ReservationRepository
-```
-
----
-
-## 11.2 Exemple
-
-```php
-public function retrouver(int $id): ?Salle
-{
-    return Salle::find($id);
-}
-```
-
-Le contrôleur n'a donc pas besoin de connaître la manière exacte dont la salle est récupérée.
-
----
-
-## 11.3 Recherche de conflit
-
-La recherche des conflits appartient au repository :
-
-```php
-return Reservation::query()
-    ->where('salle_id', $salleId)
-    ->where('statut', 'confirmee')
-    ->where('date_debut', '<', $dateFin)
-    ->where('date_fin', '>', $dateDebut)
-    ->first();
-```
-
-Le Repository sait comment rechercher dans la base.
-
-Le Service sait **pourquoi** cette recherche est nécessaire.
-
----
-
-## 11.4 Avantage
-
-Le Repository permet :
-
-* d'isoler l'accès aux données ;
-* de réduire les requêtes dans les contrôleurs ;
-* de faciliter les tests ;
-* de pouvoir faire évoluer la persistance.
-
----
-
-## 11.5 Limite
-
-Il faut éviter de transformer les repositories en classes contenant toute la logique métier.
-
-Un repository doit principalement gérer l'accès aux données.
-
----
-
-# 12. Service
-
-## 12.1 Définition
-
-Le Service contient la logique métier de l'application.
+Le Service contient la logique métier.
 
 Notre couche :
 
@@ -838,7 +537,7 @@ Notre couche :
 src/Service/
 ```
 
-contient :
+contient notamment :
 
 ```text
 CreerSalleService
@@ -848,19 +547,32 @@ AnnulerReservationService
 
 ---
 
-# 13. Exemple : création d'une réservation
+## 10.2 Responsabilités
 
-Le service :
+Le Service :
+
+* applique les règles métier ;
+* vérifie les conditions nécessaires ;
+* coordonne les repositories ;
+* décide si l'opération métier est autorisée.
+
+Le Service ne doit pas gérer l'affichage HTML.
+
+---
+
+# 11. Exemple : création d'une réservation
+
+Le Service :
 
 ```text
 CreerReservationService
 ```
 
-effectue plusieurs contrôles métier.
+effectue les vérifications métier.
 
 ---
 
-## 13.1 Vérification de la salle
+## 11.1 Vérification de la salle
 
 ```php
 $salle = $this->salleRepository->retrouver($dto->salleId);
@@ -874,11 +586,11 @@ if ($salle === null || !$salle->active) {
 
 ---
 
-## 13.2 Vérification des dates
+## 11.2 Vérification des dates
 
 ```php
 if ($dto->dateDebut >= $dto->dateFin) {
-    throw new \InvalidArgumentException(
+    throw new InvalidArgumentException(
         'La date de début doit précéder la date de fin.'
     );
 }
@@ -886,14 +598,14 @@ if ($dto->dateDebut >= $dto->dateFin) {
 
 ---
 
-## 13.3 Vérification de la durée
+## 11.3 Vérification de la durée
 
 ```php
 $duree = $dto->dateFin->getTimestamp()
     - $dto->dateDebut->getTimestamp();
 
 if ($duree > 4 * 60 * 60) {
-    throw new \InvalidArgumentException(
+    throw new InvalidArgumentException(
         'La durée de réservation ne peut pas dépasser quatre heures.'
     );
 }
@@ -901,11 +613,11 @@ if ($duree > 4 * 60 * 60) {
 
 ---
 
-## 13.4 Vérification du futur
+## 11.4 Vérification du futur
 
 ```php
-if ($dto->dateDebut <= new \DateTimeImmutable()) {
-    throw new \InvalidArgumentException(
+if ($dto->dateDebut <= new DateTimeImmutable()) {
+    throw new InvalidArgumentException(
         'La date de début doit être dans le futur.'
     );
 }
@@ -913,7 +625,7 @@ if ($dto->dateDebut <= new \DateTimeImmutable()) {
 
 ---
 
-## 13.5 Vérification du conflit
+## 11.5 Vérification du conflit
 
 ```php
 $conflit = $this->reservationRepository->rechercherConflit(
@@ -931,31 +643,238 @@ if ($conflit !== null) {
 
 ---
 
-## 13.6 Principe important
+## 11.6 Résultat
 
-Le Service contient donc les règles métier :
+Une réservation est autorisée uniquement si :
 
 ```text
+Salle existe
+     +
 Salle active
-      +
+     +
+Données valides
+     +
 Dates cohérentes
-      +
+     +
 Durée ≤ 4 heures
-      +
+     +
 Début dans le futur
-      +
+     +
 Aucun chevauchement
-      =
+     =
 Réservation autorisée
 ```
 
 ---
 
-# 14. Injection de dépendances par constructeur
+# 12. Repository
 
-## 14.1 Définition
+## 12.1 Définition
 
-L'injection de dépendances consiste à fournir à une classe les objets dont elle a besoin au lieu de les créer elle-même.
+Le Repository encapsule l'accès aux données.
+
+Notre couche :
+
+```text
+src/Repository/
+```
+
+contient :
+
+```text
+SalleRepositoryInterface
+SalleRepository
+
+ReservationRepositoryInterface
+ReservationRepository
+```
+
+---
+
+## 12.2 Exemple
+
+```php
+public function retrouver(int $id): ?Salle
+{
+    return Salle::find($id);
+}
+```
+
+Le Controller et le Service n'ont donc pas besoin de connaître directement la manière dont les données sont récupérées.
+
+---
+
+## 12.3 Recherche d'un conflit
+
+La recherche du conflit appartient au Repository car il s'agit d'une opération d'accès aux données.
+
+```php
+return Reservation::query()
+    ->where('salle_id', $salleId)
+    ->where('statut', 'confirmee')
+    ->where('date_debut', '<', $dateFin)
+    ->where('date_fin', '>', $dateDebut)
+    ->first();
+```
+
+Le Repository sait **comment rechercher** le conflit.
+
+Le Service sait **pourquoi cette recherche est nécessaire**.
+
+---
+
+## 12.4 Annulation
+
+L'annulation doit être séparée en deux responsabilités.
+
+Le Service contient la décision métier :
+
+```text
+Est-ce que cette réservation peut être annulée ?
+```
+
+Le Repository réalise ensuite l'accès aux données :
+
+```text
+Modifier le statut
+```
+
+Le flux devient :
+
+```text
+Controller
+    ↓
+AnnulerReservationService
+    ↓
+ReservationRepository
+    ↓
+Reservation
+    ↓
+MySQL
+```
+
+---
+
+# 13. ORM
+
+## 13.1 Définition
+
+ORM signifie :
+
+```text
+Object-Relational Mapping
+```
+
+Notre ORM est :
+
+```text
+Eloquent
+```
+
+fourni par :
+
+```text
+illuminate/database
+```
+
+---
+
+## 13.2 Sans ORM
+
+Sans ORM :
+
+```php
+SELECT * FROM salles WHERE id = ?
+```
+
+Il faudrait ensuite transformer manuellement le résultat SQL en objet PHP.
+
+---
+
+## 13.3 Avec Eloquent
+
+Avec Eloquent :
+
+```php
+$salle = Salle::find($id);
+```
+
+Eloquent s'occupe de construire la requête et de transformer le résultat en Model Eloquent.
+
+---
+
+# 14. Model Eloquent
+
+Dans notre architecture :
+
+```text
+src/Model/
+
+Salle.php
+Reservation.php
+```
+
+sont des Models Eloquent.
+
+Ils représentent les données et utilisent les mécanismes de persistance fournis par Eloquent.
+
+Le modèle peut par exemple effectuer :
+
+```php
+$salle->save();
+```
+
+ou :
+
+```php
+$salle = Salle::find($id);
+```
+
+---
+
+# 15. Active Record
+
+Eloquent utilise principalement le pattern :
+
+```text
+Active Record
+```
+
+Un Model Eloquent représente une ligne ou un ensemble de données et possède également des mécanismes permettant leur persistance.
+
+Exemple :
+
+```php
+$salle = new Salle();
+
+$salle->nom = 'Salle B20';
+$salle->batiment = 'B';
+$salle->capacite = 30;
+
+$salle->save();
+```
+
+Le Model sait donc comment demander à Eloquent de sauvegarder ses données.
+
+---
+
+## 15.1 Limite
+
+Active Record mélange en partie :
+
+```text
+Données
++
+Persistance
+```
+
+C'est pourquoi notre architecture conserve les Services pour la logique métier et les Repositories pour encapsuler l'accès aux données.
+
+---
+
+# 16. Injection de dépendances
+
+L'injection de dépendances consiste à fournir à une classe les objets dont elle dépend.
 
 Exemple :
 
@@ -970,13 +889,11 @@ class CreerReservationService
 }
 ```
 
-Le service reçoit ses dépendances dans son constructeur.
+Le Service ne crée pas lui-même ses repositories.
 
 ---
 
-## 14.2 Mauvaise approche
-
-On pourrait faire :
+## 16.1 Mauvaise approche
 
 ```php
 class CreerReservationService
@@ -988,31 +905,23 @@ class CreerReservationService
 }
 ```
 
-Le service serait alors fortement couplé à l'implémentation concrète.
+Cette approche crée un couplage direct avec l'implémentation.
 
 ---
 
-## 14.3 Notre approche
-
-Nous utilisons :
+## 16.2 Bonne approche
 
 ```php
 ReservationRepositoryInterface
 ```
 
-et :
+est injecté dans le Service.
 
-```php
-SalleRepositoryInterface
-```
-
-Cela réduit le couplage.
+Le Service dépend donc d'une abstraction.
 
 ---
 
-# 15. Conteneur DI
-
-## 15.1 Définition
+# 17. Conteneur DI
 
 DI signifie :
 
@@ -1020,17 +929,11 @@ DI signifie :
 Dependency Injection
 ```
 
-Le conteneur DI est responsable de construire les objets et de résoudre leurs dépendances.
-
-Notre application utilise :
+Notre projet utilise :
 
 ```text
 PHP-DI
 ```
-
----
-
-## 15.2 Configuration
 
 Le conteneur est configuré dans :
 
@@ -1038,43 +941,35 @@ Le conteneur est configuré dans :
 config/container.php
 ```
 
-Nous définissons notamment :
+---
 
-```php
-SalleRepositoryInterface::class => function () {
-    return new SalleRepository();
-},
+## 17.1 Correspondance interface → implémentation
+
+Par exemple :
+
+```text
+SalleRepositoryInterface
+          ↓
+SalleRepository
 ```
 
 et :
 
-```php
-ReservationRepositoryInterface::class => function () {
-    return new ReservationRepository();
-},
+```text
+ReservationRepositoryInterface
+          ↓
+ReservationRepository
 ```
+
+Le conteneur sait ainsi quelle classe concrète utiliser lorsqu'une interface est demandée.
 
 ---
 
-## 15.3 Résolution d'un contrôleur
+# 18. Autowiring
 
-Dans le Front Controller :
+L'autowiring permet à PHP-DI d'analyser automatiquement les constructeurs et leurs types afin de construire les objets.
 
-```php
-$controller = $container->get($controllerClass);
-```
-
-Le conteneur construit alors le contrôleur avec ses dépendances.
-
----
-
-# 16. Autowiring
-
-## 16.1 Définition
-
-L'autowiring permet au conteneur de détecter automatiquement les dépendances d'une classe grâce à son constructeur et à ses types.
-
-Par exemple :
+Exemple :
 
 ```php
 class AnnulerReservationService
@@ -1086,11 +981,11 @@ class AnnulerReservationService
 }
 ```
 
-PHP-DI peut identifier la dépendance.
+PHP-DI peut détecter la dépendance.
 
-Cependant, une interface ne peut pas toujours être instanciée directement.
+Cependant, une interface ne peut pas être instanciée directement.
 
-C'est pourquoi nous configurons explicitement les correspondances :
+Il faut donc configurer :
 
 ```text
 ReservationRepositoryInterface
@@ -1098,19 +993,9 @@ ReservationRepositoryInterface
 ReservationRepository
 ```
 
-et :
-
-```text
-SalleRepositoryInterface
-          ↓
-SalleRepository
-```
-
 ---
 
-# 17. IoC — Inversion of Control
-
-## 17.1 Définition
+# 19. IoC
 
 IoC signifie :
 
@@ -1118,54 +1003,41 @@ IoC signifie :
 Inversion of Control
 ```
 
-L'idée est que les classes ne contrôlent plus directement la création de toutes leurs dépendances.
+L'idée est que les classes ne contrôlent pas directement la création de toutes leurs dépendances.
 
-Le contrôle est transféré au conteneur.
+Le contrôle de la construction des objets est confié au conteneur.
 
 ---
 
-## 17.2 Sans IoC
+## 19.1 Sans IoC
 
 ```text
 Controller
-   │
-   ├── new Repository()
-   ├── new Service()
-   └── new Validator()
+    │
+    ├── new Repository()
+    ├── new Service()
+    └── new Validator()
 ```
-
-Le contrôleur crée tout lui-même.
 
 ---
 
-## 17.3 Avec IoC
+## 19.2 Avec IoC
 
 ```text
-                Container
-                    │
-          ┌─────────┼─────────┐
-          ▼         ▼         ▼
-     Controller  Service  Repository
+             Container
+                 │
+       ┌─────────┼─────────┐
+       ▼         ▼         ▼
+ Controller   Service   Repository
 ```
 
-Le conteneur construit les objets.
+Cela permet de réduire le couplage.
 
 ---
 
-## 17.4 Avantage
+# 20. SOLID
 
-L'IoC permet de :
-
-* réduire le couplage ;
-* centraliser la construction des objets ;
-* faciliter les tests ;
-* remplacer plus facilement une implémentation.
-
----
-
-# 18. SOLID
-
-SOLID regroupe cinq principes de conception orientée objet.
+SOLID regroupe cinq principes :
 
 ```text
 S = Single Responsibility Principle
@@ -1177,9 +1049,7 @@ D = Dependency Inversion Principle
 
 ---
 
-# 19. S — Single Responsibility Principle
-
-## Principe
+# 21. S — Single Responsibility Principle
 
 Une classe doit avoir une responsabilité principale.
 
@@ -1203,19 +1073,13 @@ ReservationController
 Coordination HTTP
 ```
 
-Chaque classe a donc un rôle précis.
-
 ---
 
-# 20. O — Open/Closed Principle
-
-## Principe
+# 22. O — Open/Closed Principle
 
 Une classe doit être ouverte à l'extension mais fermée à la modification.
 
-Nos interfaces permettent notamment d'ajouter une autre implémentation.
-
-Exemple :
+Les interfaces permettent par exemple d'avoir plusieurs implémentations.
 
 ```php
 interface SalleRepositoryInterface
@@ -1228,17 +1092,13 @@ interface SalleRepositoryInterface
 }
 ```
 
-On pourrait créer une autre implémentation du repository sans modifier le contrat.
+Une autre implémentation pourrait respecter ce contrat sans modifier le Service.
 
 ---
 
-# 21. L — Liskov Substitution Principle
+# 23. L — Liskov Substitution Principle
 
-## Principe
-
-Une implémentation doit pouvoir remplacer son abstraction sans casser le fonctionnement attendu.
-
-Dans notre projet :
+Une implémentation doit pouvoir remplacer son abstraction sans modifier le comportement attendu.
 
 ```text
 SalleRepositoryInterface
@@ -1247,29 +1107,25 @@ SalleRepositoryInterface
 SalleRepository
 ```
 
-Le service travaille avec :
+Le Service utilise :
 
 ```php
 SalleRepositoryInterface
 ```
 
-et non directement avec :
+et non :
 
 ```php
 SalleRepository
 ```
 
-L'implémentation respecte donc le contrat défini par l'interface.
-
 ---
 
-# 22. I — Interface Segregation Principle
+# 24. I — Interface Segregation Principle
 
-## Principe
+Il vaut mieux avoir plusieurs interfaces spécialisées qu'une énorme interface.
 
-Il vaut mieux avoir plusieurs interfaces spécialisées qu'une énorme interface contenant des méthodes inutiles.
-
-Dans notre architecture, nous séparons notamment :
+Dans notre projet :
 
 ```text
 SalleRepositoryInterface
@@ -1281,23 +1137,21 @@ et :
 ReservationRepositoryInterface
 ```
 
-Une classe qui travaille avec les salles n'est donc pas obligée de dépendre des méthodes relatives aux réservations.
+sont séparées.
 
 ---
 
-# 23. D — Dependency Inversion Principle
+# 25. D — Dependency Inversion Principle
 
-## Principe
+Les classes de haut niveau doivent dépendre d'abstractions.
 
-Les classes de haut niveau doivent dépendre d'abstractions plutôt que d'implémentations concrètes.
-
-Notre Service utilise :
+Notre Service dépend de :
 
 ```php
 ReservationRepositoryInterface
 ```
 
-plutôt que :
+et non directement de :
 
 ```php
 ReservationRepository
@@ -1312,21 +1166,63 @@ public function __construct(
 }
 ```
 
-C'est l'un des principes les plus importants de notre architecture.
+---
+
+# 26. Flux complet d'une réservation
+
+Lorsqu'un utilisateur crée une réservation :
+
+```text
+Utilisateur
+    │
+    │ POST /reservations
+    ▼
+public/index.php
+    │
+    ▼
+FastRoute
+    │
+    ▼
+ReservationController
+    │
+    ▼
+ReservationValidator
+    │
+    ▼
+Données validées
+    │
+    ▼
+CreerReservationDTO
+    │
+    ▼
+CreerReservationService
+    │
+    ▼
+ReservationRepository
+    │
+    ▼
+Reservation Model
+    │
+    ▼
+Eloquent
+    │
+    ▼
+MySQL
+```
 
 ---
 
-# 24. Flux complet d'une réservation
-
-Voici le fonctionnement complet lorsqu'un utilisateur crée une réservation.
+# 27. Explication détaillée du flux
 
 ## Étape 1 — Requête HTTP
 
-L'utilisateur envoie :
+Le navigateur envoie :
 
 ```text
 POST /reservations
 ```
+
+avec les données du formulaire.
 
 ---
 
@@ -1342,7 +1238,7 @@ public/index.php
 
 ## Étape 3 — Router
 
-FastRoute trouve :
+FastRoute détermine l'action :
 
 ```php
 [ReservationController::class, 'store']
@@ -1352,19 +1248,13 @@ FastRoute trouve :
 
 ## Étape 4 — Conteneur DI
 
-Le conteneur PHP-DI récupère :
-
-```text
-ReservationController
-```
-
-avec ses dépendances.
+PHP-DI construit le Controller avec ses dépendances.
 
 ---
 
 ## Étape 5 — Controller
 
-Le contrôleur récupère :
+Le Controller récupère :
 
 ```php
 $_POST
@@ -1374,23 +1264,37 @@ $_POST
 
 ## Étape 6 — Validator
 
-Les données sont validées :
+Le Validator vérifie les données.
+
+Si les données sont invalides :
 
 ```text
-ReservationValidator
+Controller
+    ↓
+View du formulaire
+    ↓
+Affichage des erreurs
+```
+
+Si elles sont valides :
+
+```text
+Controller
+    ↓
+DTO
 ```
 
 ---
 
 ## Étape 7 — DTO
 
-Les données validées sont transformées en :
+Les données sont transformées en :
 
 ```text
 CreerReservationDTO
 ```
 
-Les dates deviennent notamment :
+Les dates deviennent par exemple :
 
 ```text
 DateTimeImmutable
@@ -1406,205 +1310,79 @@ Le DTO est transmis :
 $this->creerReservationService->executer($dto);
 ```
 
-Le service vérifie les règles métier.
+Le Service applique les règles métier.
 
 ---
 
 ## Étape 9 — Repository
 
-Le service demande au repository :
+Le Service demande au Repository :
 
 ```php
-$this->reservationRepository->rechercherConflit(...)
+$this->reservationRepository->rechercherConflit(...);
 ```
 
 ---
 
-## Étape 10 — Model / Eloquent
+## Étape 10 — Model Eloquent
 
-Le repository utilise :
+Le Repository utilise :
 
 ```text
 Reservation
 ```
 
-qui s'appuie sur Eloquent.
+qui est un Model Eloquent.
 
 ---
 
-## Étape 11 — MySQL
+## Étape 11 — Eloquent
 
-Eloquent exécute la requête auprès de MySQL.
+Eloquent construit et exécute les requêtes SQL nécessaires.
 
 ---
 
-## Étape 12 — Création
+## Étape 12 — MySQL
 
-Si aucune règle métier n'est violée :
+MySQL stocke ou retourne les données.
+
+---
+
+## Étape 13 — Réponse HTTP
+
+Après la création :
 
 ```text
-Reservation
-     ↓
-save()
-     ↓
-MySQL
-```
-
----
-
-## Étape 13 — Redirection
-
-Le contrôleur redirige vers :
-
-```text
+Reservation créée
+       ↓
+redirect
+       ↓
 /reservations
 ```
 
 ---
 
-# 25. Exemple de flux en une seule vue
+# 28. Règles métier
 
-```text
-┌───────────────────────┐
-│      Navigateur       │
-└───────────┬───────────┘
-            │ POST /reservations
-            ▼
-┌───────────────────────┐
-│   public/index.php    │
-│   Front Controller    │
-└───────────┬───────────┘
-            ▼
-┌───────────────────────┐
-│       FastRoute       │
-│        Router         │
-└───────────┬───────────┘
-            ▼
-┌───────────────────────┐
-│ ReservationController │
-└───────────┬───────────┘
-            ▼
-┌───────────────────────┐
-│ ReservationValidator  │
-└───────────┬───────────┘
-            │ données valides
-            ▼
-┌───────────────────────┐
-│ CreerReservationDTO   │
-└───────────┬───────────┘
-            ▼
-┌──────────────────────────┐
-│ CreerReservationService  │
-└────────────┬─────────────┘
-             ▼
-┌──────────────────────────┐
-│ ReservationRepository    │
-└────────────┬─────────────┘
-             ▼
-┌──────────────────────────┐
-│ Reservation / Eloquent   │
-└────────────┬─────────────┘
-             ▼
-┌──────────────────────────┐
-│          MySQL           │
-└──────────────────────────┘
-```
-
----
-
-# 26. Séparation des responsabilités
-
-L'architecture respecte les règles suivantes.
-
-## Controller
-
-Le Controller :
-
-* reçoit la requête ;
-* appelle le Validator ;
-* construit le DTO ;
-* appelle le Service ;
-* prépare les données pour la vue ;
-* effectue les redirections HTTP.
-
-Le Controller ne doit pas contenir les règles métier complexes.
-
----
-
-## Validator
-
-Le Validator :
-
-* vérifie les données entrantes ;
-* retourne les erreurs de validation.
-
-Il ne doit pas créer directement une réservation.
-
----
-
-## DTO
-
-Le DTO :
-
-* transporte les données ;
-* fournit une structure claire et typée.
-
-Il ne doit pas contenir la logique métier.
-
----
-
-## Service
-
-Le Service :
-
-* applique les règles métier ;
-* coordonne les repositories ;
-* décide si une opération métier est autorisée.
-
-Il ne doit pas gérer directement l'affichage HTML.
-
----
-
-## Repository
-
-Le Repository :
-
-* récupère les données ;
-* enregistre les données ;
-* recherche les conflits ;
-* annule une réservation.
-
-Il ne doit pas gérer l'affichage ou la requête HTTP.
-
----
-
-## Model
-
-Le Model représente les données et leur interaction avec Eloquent.
-
----
-
-## View
-
-La View affiche les données.
-
-Elle ne doit pas contenir de règles métier.
-
----
-
-# 27. Règles métier centralisées
-
-La création d'une réservation respecte les règles suivantes :
+La création d'une réservation respecte notamment :
 
 ```text
 1. La salle doit exister.
+
 2. La salle doit être active.
+
 3. Le responsable doit être renseigné.
+
 4. L'adresse email doit être valide.
+
 5. Le motif doit contenir entre 5 et 255 caractères.
+
 6. La date de début doit précéder la date de fin.
+
 7. La durée ne doit pas dépasser 4 heures.
+
 8. La date de début doit être dans le futur.
+
 9. Il ne doit pas exister de réservation confirmée
    qui chevauche la nouvelle réservation.
 ```
@@ -1613,20 +1391,23 @@ La règle de chevauchement est :
 
 ```text
 nouveau début < réservation existante fin
+
 ET
+
 nouveau fin > réservation existante début
 ```
 
-Une réservation annulée ne bloque donc plus la salle.
+Ainsi, une réservation annulée ne bloque plus la salle si la recherche de conflit ne considère que les réservations confirmées.
 
 ---
 
-# 28. Gestion des exceptions
+# 29. Gestion des exceptions
 
-Le projet possède des exceptions métier spécifiques :
+Le projet possède notamment :
 
 ```text
 src/Exception/
+
 ├── ReservationIntrouvableException.php
 └── SalleIndisponibleException.php
 ```
@@ -1639,21 +1420,21 @@ throw new SalleIndisponibleException(
 );
 ```
 
-Cela permet de représenter clairement les erreurs métier.
+Les exceptions métier permettent de représenter clairement les erreurs du domaine.
 
-La gestion globale de ces exceptions pourra être améliorée afin de transformer proprement les exceptions métier en réponses HTTP adaptées.
+Le Front Controller ou un gestionnaire d'erreurs peut ensuite transformer ces exceptions en réponses HTTP appropriées.
 
 ---
 
-# 29. Sécurité et séparation des configurations
+# 30. Sécurité et configuration
 
-Les informations sensibles de connexion à la base de données sont stockées dans :
+Les informations sensibles sont stockées dans :
 
 ```text
 .env
 ```
 
-et non directement dans le code source.
+et non directement dans le code.
 
 Le projet fournit :
 
@@ -1661,15 +1442,19 @@ Le projet fournit :
 .env.example
 ```
 
-comme modèle de configuration.
+comme modèle.
 
-Les secrets ne doivent pas être versionnés dans Git.
+Le fichier :
+
+```text
+.env
+```
+
+ne doit normalement pas être versionné dans Git.
 
 ---
 
-# 30. Dépendances principales
-
-Le projet utilise notamment :
+# 31. Dépendances principales
 
 | Dépendance            | Rôle                      |
 | --------------------- | ------------------------- |
@@ -1682,151 +1467,117 @@ Le projet utilise notamment :
 
 ---
 
-# 31. Pourquoi cette architecture ?
+# 32. Séparation des responsabilités
 
-Cette architecture évite d'avoir une application construite autour d'un seul fichier contenant :
-
-```text
-SQL
-+
-HTML
-+
-$_POST
-+
-validation
-+
-logique métier
-+
-redirections
-```
-
-Au contraire, les responsabilités sont réparties :
+## Controller
 
 ```text
 HTTP
- ↓
+↓
 Controller
-
-Validation
- ↓
-Validator
-
-Transport
- ↓
-DTO
-
-Métier
- ↓
-Service
-
-Données
- ↓
-Repository
-
-Persistance
- ↓
-Model / Eloquent
-
-Base
- ↓
-MySQL
 ```
 
-Cette organisation rend le projet :
+Responsabilités :
 
-* plus lisible ;
-* plus maintenable ;
-* plus testable ;
-* plus évolutif ;
-* moins fortement couplé.
-
----
-
-# 32. Avantages de l'architecture
-
-### Lisibilité
-
-Chaque couche possède un rôle identifiable.
-
-### Maintenabilité
-
-Une modification peut être localisée dans la couche concernée.
-
-### Testabilité
-
-Les services et repositories peuvent être testés séparément.
-
-### Réutilisabilité
-
-Une règle métier située dans un Service peut être appelée depuis plusieurs contrôleurs.
-
-### Faible couplage
-
-Les interfaces et l'injection de dépendances limitent les dépendances directes aux implémentations.
-
-### Évolutivité
-
-L'application peut évoluer progressivement sans transformer le contrôleur en classe gigantesque.
+* recevoir la requête ;
+* appeler le Validator ;
+* construire le DTO ;
+* appeler le Service ;
+* préparer la View ;
+* effectuer les redirections.
 
 ---
 
-# 33. Limites et risques
+## Validator
 
-Cette architecture apporte davantage de structure, mais également davantage de classes.
+```text
+Données HTTP
+↓
+Validator
+```
 
-Pour une petite application, on pourrait considérer que :
+Responsabilité :
+
+* vérifier les données entrantes.
+
+---
+
+## DTO
+
+```text
+Données validées
+↓
+DTO
+```
+
+Responsabilité :
+
+* transporter des données structurées et typées.
+
+---
+
+## Service
+
+```text
+DTO
+↓
+Service
+```
+
+Responsabilité :
+
+* appliquer les règles métier.
+
+---
+
+## Repository
+
+```text
+Service
+↓
+Repository
+```
+
+Responsabilité :
+
+* accéder aux données ;
+* rechercher ;
+* enregistrer ;
+* modifier ;
+* supprimer selon les besoins de persistance.
+
+---
+
+## Model
+
+```text
+Repository
+↓
+Model Eloquent
+```
+
+Responsabilité :
+
+* représenter les données ;
+* utiliser les mécanismes de persistance d'Eloquent.
+
+---
+
+## View
 
 ```text
 Controller
-+
-Service
-+
-Repository
-+
-DTO
-+
-Validator
-+
-Model
+↓
+View
 ```
 
-représente beaucoup de couches.
+Responsabilité :
 
-Cependant, dans le contexte de ce projet, cette organisation est volontaire : elle permet de pratiquer plusieurs concepts d'architecture logicielle et de respecter les contraintes du projet.
-
-Il faut également éviter :
-
-* des services trop gros ;
-* des repositories contenant la logique métier ;
-* des contrôleurs contenant trop de logique ;
-* des modèles surchargés ;
-* des interfaces créées sans véritable besoin ;
-* une utilisation excessive du conteneur DI.
+* afficher les données en HTML.
 
 ---
 
-# 34. Résumé des responsabilités
-
-| Élément            | Responsabilité principale                 |
-| ------------------ | ----------------------------------------- |
-| `public/index.php` | Point d'entrée unique                     |
-| FastRoute          | Routage HTTP                              |
-| Controller         | Coordination HTTP                         |
-| Validator          | Validation des données                    |
-| DTO                | Transport des données                     |
-| Service            | Logique métier                            |
-| Repository         | Accès aux données                         |
-| Model              | Représentation des données                |
-| Eloquent           | Persistance ORM                           |
-| PHP-DI             | Construction et injection des dépendances |
-| View               | Affichage HTML                            |
-| MySQL              | Stockage des données                      |
-
----
-
-# 35. Architecture finale
-
-L'architecture retenue peut être résumée ainsi :
+# 33. Architecture finale
 
 ```text
                            ┌───────────────┐
@@ -1835,15 +1586,16 @@ L'architecture retenue peut être résumée ainsi :
                                    │
                                    ▼
                            ┌───────────────┐
-                           │    Front      │
-                           │   Controller  │
+                           │ public/       │
                            │ index.php     │
+                           │ Front         │
+                           │ Controller    │
                            └───────┬───────┘
                                    │
                                    ▼
                            ┌───────────────┐
-                           │    Router     │
-                           │   FastRoute   │
+                           │    FastRoute   │
+                           │     Router     │
                            └───────┬───────┘
                                    │
                                    ▼
@@ -1851,48 +1603,68 @@ L'architecture retenue peut être résumée ainsi :
                        │      Controller       │
                        └───────────┬───────────┘
                                    │
-                    ┌──────────────┴──────────────┐
-                    │                             │
-                    ▼                             ▼
-             ┌─────────────┐              ┌─────────────┐
-             │  Validator  │              │    View     │
-             └──────┬──────┘              └─────────────┘
-                    │
-                    ▼
-             ┌─────────────┐
-             │     DTO     │
-             └──────┬──────┘
-                    │
-                    ▼
-             ┌─────────────┐
-             │   Service   │
-             │ Métier      │
-             └──────┬──────┘
-                    │
-                    ▼
-             ┌─────────────┐
-             │ Repository  │
-             └──────┬──────┘
-                    │
-                    ▼
-             ┌─────────────┐
-             │    Model    │
-             │  Eloquent   │
-             └──────┬──────┘
-                    │
-                    ▼
-             ┌─────────────┐
-             │    MySQL    │
-             └─────────────┘
+                    ┌──────────────┼──────────────┐
+                    │              │              │
+                    ▼              ▼              ▼
+             ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+             │  Validator  │ │     DTO     │ │    View     │
+             └──────┬──────┘ └──────┬──────┘ └─────────────┘
+                    │               │
+                    └───────┬───────┘
+                            ▼
+                     ┌─────────────┐
+                     │   Service   │
+                     │ Logique     │
+                     │ métier      │
+                     └──────┬──────┘
+                            │
+                            ▼
+                     ┌─────────────┐
+                     │ Repository  │
+                     └──────┬──────┘
+                            │
+                            ▼
+                     ┌─────────────┐
+                     │    Model    │
+                     │  Eloquent   │
+                     └──────┬──────┘
+                            │
+                            ▼
+                     ┌─────────────┐
+                     │   Eloquent  │
+                     │     ORM     │
+                     └──────┬──────┘
+                            │
+                            ▼
+                     ┌─────────────┐
+                     │    MySQL    │
+                     └─────────────┘
 ```
 
 ---
 
-# 36. Conclusion
+# 34. Résumé des responsabilités
 
-L'application **Gestion University** utilise une architecture orientée objet structurée autour de plusieurs responsabilités.
+| Élément            | Responsabilité principale                          |
+| ------------------ | -------------------------------------------------- |
+| `public/index.php` | Point d'entrée unique                              |
+| FastRoute          | Routage HTTP                                       |
+| Controller         | Coordination HTTP                                  |
+| Validator          | Validation des données                             |
+| DTO                | Transport des données                              |
+| Service            | Logique métier                                     |
+| Repository         | Accès aux données                                  |
+| Model              | Représentation des données et persistance Eloquent |
+| Eloquent           | ORM et communication avec la base                  |
+| PHP-DI             | Construction et injection des dépendances          |
+| View               | Affichage HTML                                     |
+| MySQL              | Stockage des données                               |
 
-Le parcours principal d'une requête est :
+---
+
+# 35. Architecture en une phrase
+
+On peut retenir :
 
 ```text
 HTTP
@@ -1906,45 +1678,87 @@ Controller
 Validator
  ↓
 DTO
-
  ↓
 Service
  ↓
 Repository
  ↓
-Model / Eloquent
+Model Eloquent
+ ↓
+Eloquent
  ↓
 MySQL
 ```
 
-Cette architecture permet de séparer clairement :
+Avec :
 
-* la réception des requêtes ;
-* le routage ;
-* la validation ;
-* le transport des données ;
-* la logique métier ;
-* l'accès aux données ;
-* la persistance ;
-* la présentation.
+```text
+Controller → coordination HTTP
+Validator  → validation des données
+DTO        → transport des données
+Service    → logique métier
+Repository → accès aux données
+Model      → données + persistance Eloquent
+View       → affichage
+PHP-DI     → injection des dépendances
+```
 
-Elle met également en pratique plusieurs concepts fondamentaux de conception logicielle :
+---
+
+# 36. Conclusion
+
+L'architecture **Gestion University** repose sur une séparation claire des responsabilités.
+
+Elle combine :
 
 ```text
 MVC
++
 Front Controller
++
 Router
++
 Validator
++
 DTO
-ORM
-Active Record
-Repository
++
 Service
++
+Repository
++
+ORM
++
+Active Record
++
 Dependency Injection
++
 DI Container
-Autowiring
++
 IoC
++
 SOLID
 ```
 
-L'objectif n'est donc pas uniquement de faire fonctionner l'application, mais de construire une application dont les responsabilités sont clairement séparées et dont le code peut évoluer sans créer un couplage excessif entre les différentes parties.
+Le principe essentiel est :
+
+```text
+Le Controller gère HTTP.
+
+Le Validator vérifie les données.
+
+Le DTO transporte les données.
+
+Le Service applique les règles métier.
+
+Le Repository accède aux données.
+
+Le Model représente les données avec Eloquent.
+
+Eloquent assure la persistance ORM.
+
+La View affiche les données.
+
+PHP-DI construit et injecte les dépendances.
+```
+
+Cette architecture est adaptée à **Gestion University** car elle permet de garder le projet organisé, testable, maintenable et évolutif tout en respectant une séparation claire entre la présentation, la logique métier et la persistance.

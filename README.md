@@ -23,7 +23,7 @@ Une réservation ne peut être enregistrée que si toutes les règles métier so
 
 ## 🏫 Gestion des salles
 
-L'application prévoit les fonctionnalités suivantes :
+L'application permet de :
 
 * afficher la liste des salles ;
 * afficher le détail d'une salle ;
@@ -34,7 +34,7 @@ L'application prévoit les fonctionnalités suivantes :
 
 ## 📅 Gestion des réservations
 
-L'application prévoit :
+L'application permet de :
 
 * afficher la liste des réservations ;
 * afficher le détail d'une réservation ;
@@ -88,7 +88,9 @@ Le chevauchement est déterminé avec la règle :
 
 ```text
 nouvelleDateDebut < dateFinExistante
+
 ET
+
 nouvelleDateFin > dateDebutExistante
 ```
 
@@ -169,8 +171,7 @@ confirmee
 annulee
 ```
 
-Ces valeurs techniques sont affichées sous les libellés français
-« Confirmée » et « Annulée » dans l'interface.
+Ces valeurs techniques sont affichées sous les libellés français **« Confirmée »** et **« Annulée »** dans l'interface.
 
 La colonne `salle_id` est une clé étrangère vers :
 
@@ -220,6 +221,7 @@ Le seeder utilise Eloquent et `firstOrCreate()` afin d'éviter de créer plusieu
 * **PHP-DI**
 * **PHP-Dotenv**
 * **PHPUnit**
+* **Docker** pour l'environnement d'exécution et les workflows de build d'images
 
 ---
 
@@ -245,33 +247,49 @@ Les tests utilisent :
 }
 ```
 
+Les versions exactes installées sont verrouillées dans `composer.lock`.
+
 ---
 
 # 📋 Prérequis
 
-Avant d'installer le projet, il faut disposer de :
+Pour une installation locale, il faut disposer de :
 
 * PHP 8.3 ou supérieur ;
 * Composer ;
 * MySQL ;
 * Git.
 
-Vérifier PHP :
+Pour vérifier PHP :
 
 ```bash
 php --version
 ```
 
-Vérifier Composer :
+Pour vérifier Composer :
 
 ```bash
 composer --version
 ```
 
-Vérifier MySQL :
+Pour vérifier MySQL :
 
 ```bash
 mysql --version
+```
+
+Si l'application est exécutée avec Docker, Docker Engine et Docker Compose doivent également être disponibles.
+
+Vérifier Docker :
+
+```bash
+docker --version
+```
+
+Vérifier Docker Compose :
+
+```bash
+docker compose version
 ```
 
 ---
@@ -280,11 +298,13 @@ mysql --version
 
 ## 1. Récupérer le projet
 
+Cloner le dépôt :
+
 ```bash
 git clone <URL_DU_DEPOT>
 ```
 
-Puis :
+Puis accéder au projet :
 
 ```bash
 cd Gestion_University
@@ -330,7 +350,7 @@ USE gestion_university;
 
 Le projet utilise **PHP-Dotenv** pour charger la configuration depuis `.env`.
 
-Créer le fichier :
+Créer le fichier `.env` à partir du modèle :
 
 ```bash
 cp .env.example .env
@@ -349,19 +369,24 @@ DB_PASSWORD=
 
 > Le fichier `.env` contient les informations sensibles et ne doit pas être versionné.
 
+Le fichier `.env.example` sert uniquement de modèle de configuration.
+
 ---
 
 # 🏗️ Création des tables
 
-Les fichiers SQL se trouvent dans :
+Les scripts SQL se trouvent dans :
 
 ```text
 database/migrations/
+
 ├── 001_create_salles.sql
 └── 002_create_reservations.sql
 ```
 
-La migration des salles doit être exécutée avant celle des réservations car `reservations.salle_id` référence `salles.id`.
+Ces fichiers sont des **scripts SQL de création de tables** exécutés manuellement.
+
+La création de `salles` doit être effectuée avant celle de `reservations`, car `reservations.salle_id` référence `salles.id`.
 
 ## Créer `salles`
 
@@ -387,11 +412,45 @@ Une fois les tables créées et la configuration `.env` terminée :
 php database/seed.php
 ```
 
-Le programme affiche les salles créées ou déjà existantes puis :
+Le programme utilise Eloquent et `firstOrCreate()` afin d'éviter les doublons.
+
+Lorsque l'opération est terminée, le programme affiche :
 
 ```text
 Seeder terminé.
 ```
+
+---
+
+# 🐳 Exécution avec Docker
+
+Le projet dispose également d'une configuration Docker permettant d'exécuter l'application dans un environnement conteneurisé.
+
+Pour démarrer les services :
+
+```bash
+docker compose up -d
+```
+
+Vérifier leur état :
+
+```bash
+docker compose ps
+```
+
+Pour consulter les logs de l'application :
+
+```bash
+docker compose logs app
+```
+
+Pour arrêter les services :
+
+```bash
+docker compose down
+```
+
+La configuration Docker dépend des fichiers `Dockerfile` et `compose.yaml` présents dans le dépôt.
 
 ---
 
@@ -403,7 +462,7 @@ Le **Front Controller** de l'application est :
 public/index.php
 ```
 
-Lancer le serveur PHP intégré :
+En environnement local avec le serveur PHP intégré :
 
 ```bash
 php -S localhost:8000 -t public
@@ -429,7 +488,7 @@ routes/web.php
 
 ## Routes principales
 
-### Salles
+### 🏫 Salles
 
 ```text
 GET  /
@@ -441,7 +500,7 @@ GET  /salles/{id}/edit
 POST /salles/{id}/edit
 ```
 
-### Réservations
+### 📅 Réservations
 
 ```text
 GET  /reservations
@@ -451,14 +510,13 @@ GET  /reservations/{id}
 POST /reservations/{id}/cancel
 ```
 
-La liste des réservations peut être filtrée par salle avec le paramètre
-`salle_id` :
+La liste des réservations peut être filtrée par salle avec le paramètre `salle_id` :
 
 ```text
 GET /reservations?salle_id=2
 ```
 
-Une URL inconnue retourne une réponse HTTP :
+Une URL inconnue retourne :
 
 ```text
 404 Not Found
@@ -470,7 +528,13 @@ Une méthode HTTP non autorisée retourne :
 405 Method Not Allowed
 ```
 
-avec l'en-tête `Allow`.
+avec l'en-tête HTTP :
+
+```text
+Allow
+```
+
+contenant les méthodes autorisées par la route.
 
 ---
 
@@ -507,12 +571,22 @@ Eloquent ORM
 MySQL
 ```
 
+Cette organisation permet de séparer :
+
+* la réception des requêtes HTTP ;
+* la validation des données ;
+* le transport des données ;
+* les règles métier ;
+* l'accès aux données ;
+* la persistance en base de données.
+
 ---
 
 # 📁 Structure du projet
 
 ```text
 Gestion_University/
+
 │
 ├── config/
 │   ├── container.php
@@ -557,7 +631,8 @@ Gestion_University/
 ├── composer.json
 ├── composer.lock
 ├── phpunit.xml
-└── README.md
+├── README.md
+└── ARCHITECTURE.md
 ```
 
 ---
@@ -575,7 +650,7 @@ SalleController
 ReservationController
 ```
 
-Ils ne doivent pas contenir directement les requêtes ORM liées à la base de données.
+Les contrôleurs ne doivent pas contenir directement les requêtes ORM liées à la base de données.
 
 ---
 
@@ -594,10 +669,14 @@ ReservationValidator
 
 * la salle ;
 * le responsable ;
-* l'email ;
+* l'adresse email ;
 * le motif ;
 * la date de début ;
 * la date de fin.
+
+La validation concerne principalement les données entrantes.
+
+Les règles métier plus complexes sont appliquées par les services.
 
 ---
 
@@ -610,7 +689,22 @@ CreerSalleDTO
 CreerReservationDTO
 ```
 
-Ils permettent de transmettre des données structurées entre les couches.
+Ils permettent de transmettre des données structurées entre les différentes couches de l'application.
+
+Le flux général est :
+
+```text
+Données HTTP
+    │
+    ▼
+Validator
+    │
+    ▼
+DTO
+    │
+    ▼
+Service
+```
 
 ---
 
@@ -628,10 +722,10 @@ Par exemple, `CreerReservationService` vérifie :
 
 * l'existence de la salle ;
 * son activation ;
-* la durée ;
-* les dates ;
-* la date future ;
-* les conflits de réservation.
+* l'ordre des dates ;
+* la durée maximale ;
+* le caractère futur de la réservation ;
+* les conflits avec les réservations confirmées.
 
 ---
 
@@ -652,6 +746,8 @@ Ils permettent notamment de :
 * annuler ;
 * rechercher un conflit.
 
+Les interfaces de repository permettent aux services et contrôleurs de dépendre d'abstractions plutôt que directement des implémentations concrètes.
+
 ---
 
 ## Model
@@ -664,6 +760,8 @@ Reservation
 ```
 
 Le modèle `Salle` possède une relation `hasMany` avec les réservations.
+
+Le modèle `Reservation` possède une relation `belongsTo` avec une salle.
 
 ---
 
@@ -693,11 +791,15 @@ public function __construct(
 
 Cette organisation évite que les contrôleurs créent eux-mêmes leurs dépendances.
 
+Le conteneur permet notamment l'autowiring et la résolution des dépendances.
+
 ---
 
 # 🧪 Scénarios de recette
 
-Les scénarios fonctionnels du cahier des charges ont été vérifiés.
+Les scénarios suivants servent à vérifier les principales règles fonctionnelles de l'application.
+
+> Les dates utilisées ci-dessous constituent des données de test et peuvent être adaptées à la date d'exécution des tests.
 
 ## Scénario 1 — Réservation valide
 
@@ -712,7 +814,7 @@ Email : awa.ndiaye@universite.sn
 Motif : Cours d'architecture logicielle
 ```
 
-Résultat :
+Résultat attendu :
 
 ```text
 Réservation confirmée
@@ -734,7 +836,7 @@ Nouvelle réservation :
 11h30 → 13h00
 ```
 
-Résultat :
+Résultat attendu :
 
 ```text
 Réservation refusée
@@ -756,7 +858,7 @@ Nouvelle réservation :
 12h00 → 14h00
 ```
 
-Résultat :
+Résultat attendu :
 
 ```text
 Réservation acceptée
@@ -772,9 +874,9 @@ La salle :
 Laboratoire Chimie
 ```
 
-a été désactivée.
+est désactivée.
 
-Résultat :
+Résultat attendu :
 
 ```text
 Réservation refusée
@@ -796,7 +898,7 @@ Durée :
 6 heures
 ```
 
-Résultat :
+Résultat attendu :
 
 ```text
 Réservation refusée
@@ -806,7 +908,7 @@ Réservation refusée
 
 ## Scénario 6 — Formulaire invalide
 
-Données invalides utilisées :
+Données invalides :
 
 ```text
 Responsable : vide
@@ -814,7 +916,7 @@ Email : invalide
 Motif : TP
 ```
 
-Résultat :
+Résultat attendu :
 
 ```text
 Erreurs de validation affichées
@@ -831,7 +933,7 @@ Exemple :
 GET /inconnue
 ```
 
-Résultat :
+Résultat attendu :
 
 ```text
 404 Not Found
@@ -847,17 +949,13 @@ Exemple :
 DELETE /salles
 ```
 
-Résultat :
+Résultat attendu :
 
 ```text
 405 Method Not Allowed
 ```
 
-avec :
-
-```text
-Allow: GET, POST
-```
+avec un en-tête `Allow` indiquant les méthodes autorisées.
 
 ---
 
@@ -867,6 +965,7 @@ Les tests automatisés sont organisés dans :
 
 ```text
 tests/
+
 ├── Unit/
 └── Integration/
 ```
@@ -877,9 +976,9 @@ La commande prévue pour exécuter PHPUnit est :
 vendor/bin/phpunit
 ```
 
-Les tests unitaires couvrent les validateurs et les règles métier de création.
-Les tests d'intégration couvrent Eloquent, les relations, les conflits et
-l'annulation d'une réservation.
+Les tests unitaires vérifient notamment les validateurs et les règles métier isolables.
+
+Les tests d'intégration vérifient notamment les interactions avec Eloquent, les relations, les conflits de réservation et l'annulation.
 
 ---
 
@@ -889,12 +988,14 @@ Le projet applique plusieurs principes :
 
 * les secrets sont placés dans `.env` ;
 * `.env` ne doit pas être versionné ;
-* `.env.example` permet de documenter la configuration nécessaire ;
+* `.env.example` documente la configuration nécessaire ;
 * les données HTTP sont validées avant utilisation ;
 * les règles métier sont centralisées dans les services ;
 * les accès aux données sont encapsulés dans les repositories ;
 * les dépendances sont injectées par constructeur ;
-* `public/index.php` constitue le point d'entrée de l'application.
+* `public/index.php` constitue le point d'entrée de l'application ;
+* les requêtes vers la base de données utilisent Eloquent ;
+* les responsabilités sont séparées entre les différentes couches.
 
 ---
 
@@ -902,7 +1003,7 @@ Le projet applique plusieurs principes :
 
 Le projet utilise Git pour suivre les différentes étapes du développement.
 
-Les versions principales sont marquées par des tags :
+Les versions principales sont marquées par les tags :
 
 ```text
 v0.0.0
@@ -918,45 +1019,62 @@ v0.9.0
 v0.10.0
 ```
 
-Le routing FastRoute correspond au tag :
+Le routing avec FastRoute correspond au tag :
 
 ```text
 v0.10.0
 ```
 
-## Images Docker par tag
-
-Chaque tag `v*` déclenche automatiquement le workflow
-`.github/workflows/docker-tag-image.yml`. Une image est construite depuis le
-contenu exact du tag et publiée dans GitHub Container Registry avec les tags :
-
-```text
-ghcr.io/leprogrammeur45/gestion_university:v1.0.0
-ghcr.io/leprogrammeur45/gestion_university:latest
-```
-
-Le script local construit également une image pour chaque tag existant :
-
-```bash
-IMAGE=papamamadoudiouf/gestion-university \
-     ./docker/docker-release-all.sh
-```
-
-Avant d'utiliser le script local, se connecter au registre choisi avec
-`docker login`. Le nom de l'image peut être remplacé par la variable `IMAGE`.
-
 Un correctif concernant la validation des données provenant du formulaire a ensuite été enregistré avec le commit :
 
 ```text
 b5966be
+
 fix: adapt reservation validation to form input
 ```
 
 ---
 
+# 🐳 Images Docker et releases
+
+Le projet possède également un workflow permettant de construire des images Docker à partir des tags Git.
+
+Le workflow est situé dans :
+
+```text
+.github/workflows/docker-tag-image.yml
+```
+
+Lorsqu'une release/tag est traité par ce workflow, une image Docker peut être construite à partir du contenu correspondant au tag et publiée dans un registre de conteneurs configuré par le projet.
+
+Le script local de génération des images pour les tags est :
+
+```text
+docker/docker-release-all.sh
+```
+
+Exemple :
+
+```bash
+IMAGE=papamamadoudiouf/gestion-university \
+./docker/docker-release-all.sh
+```
+
+Avant d'utiliser le script avec un registre nécessitant une authentification, se connecter au registre concerné avec :
+
+```bash
+docker login
+```
+
+La variable `IMAGE` permet de définir le nom du dépôt d'images utilisé par le script.
+
+Les noms exacts des registres et des images dépendent de la configuration du workflow et du script.
+
+---
+
 # 📚 Documentation complémentaire
 
-L'analyse détaillée de l'architecture du projet est destinée à être documentée dans :
+L'analyse détaillée de l'architecture du projet est documentée dans :
 
 ```text
 ARCHITECTURE.md
@@ -986,3 +1104,8 @@ Cette documentation présente notamment :
 **Leprogrammeur**
 
 Projet individuel — Gestion et réservation de salles universitaires.
+
+```
+
+Cette version est maintenant **plus cohérente et plus prudente** : elle ne prétend pas que les tags `v0.x` et `v1.0.0` représentent la même release, ne présente pas les scripts SQL comme de vraies migrations framework, et distingue l'exécution locale de l'exécution Docker.
+```

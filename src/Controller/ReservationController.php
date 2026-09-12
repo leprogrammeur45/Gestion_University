@@ -2,46 +2,46 @@
 
 namespace App\Controller;
 
-use App\DTO\CreerReservationDTO;
+use App\DTO\CreerReservationDTOBuilder;
 use App\Exception\ReservationIntrouvableException;
 use App\Exception\SalleIndisponibleException;
-use App\Repository\ReservationRepositoryInterface;
-use App\Repository\SalleRepositoryInterface;
 use App\Service\AnnulerReservationService;
 use App\Service\CreerReservationService;
+use App\Service\ListerReservationsService;
+use App\Service\ListerSallesService;
+use App\Service\TrouverReservationService;
 use App\Validation\ReservationValidator;
 
 class ReservationController
 {
-    // Injection des dépendances
     public function __construct(
-        private readonly ReservationRepositoryInterface $reservationRepository,
-        private readonly SalleRepositoryInterface $salleRepository,
+        private readonly ListerReservationsService $listerReservationsService,
+        private readonly TrouverReservationService $trouverReservationService,
+        private readonly ListerSallesService $listerSallesService,
         private readonly CreerReservationService $creerReservationService,
         private readonly AnnulerReservationService $annulerReservationService,
-        private readonly ReservationValidator $reservationValidator
+        private readonly ReservationValidator $reservationValidator,
+        private readonly CreerReservationDTOBuilder $reservationDTOBuilder
     ) {
     }
-
-    // Afficher la liste des réservations
+//affiche la liste des reservations
     public function index(): void
     {
         $salleId = isset($_GET['salle_id']) && ctype_digit((string) $_GET['salle_id'])
             ? (int) $_GET['salle_id']
             : null;
 
-        $reservations = $this->reservationRepository->lister($salleId);
-        $salles = $this->salleRepository->lister();
+        $reservations = $this->listerReservationsService->executer($salleId);
+        $salles = $this->listerSallesService->executer();
 
         require __DIR__ . '/../../templates/reservation/index.php';
     }
-
-    // Afficher une réservation
+//affiche une reservation
     public function show(int $id): void
     {
-        $reservation = $this->reservationRepository->retrouver($id);
-
-        if ($reservation === null) {
+        try {
+            $reservation = $this->trouverReservationService->executer($id);
+        } catch (ReservationIntrouvableException) {
             http_response_code(404);
             require __DIR__ . '/../../templates/error/404.php';
             return;
@@ -49,65 +49,54 @@ class ReservationController
 
         require __DIR__ . '/../../templates/reservation/show.php';
     }
-
-    // Afficher le formulaire de création
+//affiche le formulaire
     public function create(): void
     {
-        $salles = $this->salleRepository->lister();
+        $salles = $this->listerSallesService->executer();
 
         require __DIR__ . '/../../templates/reservation/form.php';
     }
-
-    // Enregistrer une nouvelle réservation
+//traite la creation d une reservation
     public function store(): void
     {
-        // Récupérer les données du formulaire
         $data = $_POST;
 
-        // Valider les données
         $result = $this->reservationValidator->validate($data);
 
-        // Si les données sont invalides
         if (!$result->isValid()) {
             $errors = $result->errors();
+            $salles = $this->listerSallesService->executer();
 
-            $salles = $this->salleRepository->lister();
-
-            // Réafficher le formulaire avec les erreurs
             require __DIR__ . '/../../templates/reservation/form.php';
             return;
         }
 
-        // Convertir les dates en objets DateTimeImmutable
         $dateDebut = new \DateTimeImmutable($data['date_debut']);
         $dateFin = new \DateTimeImmutable($data['date_fin']);
 
-        // Créer le DTO
-        $dto = new CreerReservationDTO(
-            salleId: (int) $data['salle_id'],
-            responsable: $data['responsable'],
-            email: $data['email'],
-            motif: $data['motif'],
-            dateDebut: $dateDebut,
-            dateFin: $dateFin
-        );
+        $dto = $this->reservationDTOBuilder
+            ->salleId((int) $data['salle_id'])
+            ->responsable($data['responsable'])
+            ->email($data['email'])
+            ->motif($data['motif'])
+            ->dateDebut($dateDebut)
+            ->dateFin($dateFin)
+            ->build();
 
         try {
             $this->creerReservationService->executer($dto);
         } catch (SalleIndisponibleException|\InvalidArgumentException $exception) {
             $errors = ['general' => [$exception->getMessage()]];
-            $salles = $this->salleRepository->lister();
+            $salles = $this->listerSallesService->executer();
 
             require __DIR__ . '/../../templates/reservation/form.php';
             return;
         }
 
-        // Rediriger vers la liste
         header('Location: /reservations?success=reservation_created');
         exit;
     }
-
-    // Annuler une réservation
+//annule une reservation
     public function cancel(int $id): void
     {
         try {
@@ -116,10 +105,10 @@ class ReservationController
             http_response_code(404);
             require __DIR__ . '/../../templates/error/404.php';
             return;
-        }
-
-        // Rediriger vers la liste
+        }  
         header('Location: /reservations?success=reservation_cancelled');
         exit;
+
+      
     }
 }

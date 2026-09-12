@@ -3,19 +3,27 @@
 namespace App\Service;
 
 use App\DTO\CreerSalleDTO;
+use App\Exception\SalleIntrouvableException;
 use App\Model\Salle;
 use App\Repository\SalleRepositoryInterface;
 
-final class CreerSalleService
+final class ModifierSalleService
 {
     public function __construct(
         private readonly SalleRepositoryInterface $salleRepository
     ) {
     }
 
-    public function executer(CreerSalleDTO $dto): Salle
+    public function executer(int $id, CreerSalleDTO $dto): Salle
     {
-        $salle = new Salle();
+        $salle = $this->salleRepository->retrouver($id);
+
+        if ($salle === null) {
+            throw new SalleIntrouvableException(
+                'La salle demandée est introuvable.'
+            );
+        }
+
         $salle->nom = $dto->nom;
         $salle->batiment = $dto->batiment;
         $salle->capacite = $dto->capacite;

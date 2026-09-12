@@ -26,3 +26,17 @@ $capsule->setAsGlobal();
 $capsule->bootEloquent();
 
 return $capsule;
+
+
+
+
+
+
+
+
+
+
+//Dotenv recupere les informations .env
+//prepare la connexion avec eloquent
+//rend la configuration accessible globalement
+//demarre eloquent

@@ -1,19 +1,13 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types=1);//typage strict
 
-use DI\ContainerBuilder;
-use PapaMamadouDiouf\GestionUniversity\Application;
+use App\Factory\ContainerFactory;
+use App\Application;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-$builder = new ContainerBuilder();
-
-$builder->addDefinitions(
-    dirname(__DIR__) . '/config/container.php'
-);
-
-$container = $builder->build();
+$container = ContainerFactory::create(dirname(__DIR__));
 
 $application = $container->get(Application::class);
 

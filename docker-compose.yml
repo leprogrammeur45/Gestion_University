@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
 
     container_name: gestion_university_app
-
+    restart: unless-stopped
     ports:
       - "8000:80"
 
@@ -29,9 +29,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
 
-    ports:
-      - "3307:3306"
-
+ 
     volumes:
       - mysql_data:/var/lib/mysql
 

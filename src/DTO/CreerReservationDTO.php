@@ -1,10 +1,11 @@
 <?php
-
+//Le DTO sert à transporter toutes les informations 
+//nécessaires pour créer une réservation dans un seul objet.
 namespace App\DTO;
 
 use DateTimeImmutable;
 
-class CreerReservationDTO
+final class CreerReservationDTO
 {
     public function __construct(
         public readonly int $salleId,
@@ -16,3 +17,5 @@ class CreerReservationDTO
     ) {
     }
 }
+//readonly
+//Une fois que la valeur est définie, on ne peut plus la modifier.

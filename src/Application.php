@@ -1,10 +1,11 @@
 <?php
 
-namespace PapaMamadouDiouf\GestionUniversity;
+namespace App;
 
 use Closure;
 use FastRoute\Dispatcher;
-
+// Dispatcher trouver la route->controller
+// closure recuperation
 class Application
 {
     public function __construct(

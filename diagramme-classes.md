@@ -1,5 +1,4 @@
-# Diagramme de classes
-
+```mermaid
 classDiagram
 
     %% =========================
@@ -43,6 +42,7 @@ classDiagram
         -SalleRepositoryInterface salleRepository
         -CreerSalleService creerSalleService
         -SalleValidator salleValidator
+
         +index() void
         +show(int id) void
         +create() void
@@ -57,6 +57,7 @@ classDiagram
         -CreerReservationService creerReservationService
         -AnnulerReservationService annulerReservationService
         -ReservationValidator reservationValidator
+
         +index() void
         +show(int id) void
         +create() void
@@ -71,18 +72,21 @@ classDiagram
 
     class CreerSalleService {
         -SalleRepositoryInterface salleRepository
+
         +executer(CreerSalleDTO dto) Salle
     }
 
     class CreerReservationService {
         -SalleRepositoryInterface salleRepository
         -ReservationRepositoryInterface reservationRepository
-        +executer(CreerReservationDTO dto) ?Reservation
+
+        +executer(CreerReservationDTO dto) Reservation
     }
 
     class AnnulerReservationService {
         -ReservationRepositoryInterface reservationRepository
-        +executer(int id) ?Reservation
+
+        +executer(int id) Reservation
     }
 
 
@@ -114,32 +118,34 @@ classDiagram
 
     class SalleRepositoryInterface {
         <<interface>>
+
         +lister() array
-        +retrouver(int id) ?Salle
+        +retrouver(int id) Salle
         +enregistrer(Salle salle) Salle
     }
 
     class SalleRepository {
         +lister() array
-        +retrouver(int id) ?Salle
+        +retrouver(int id) Salle
         +enregistrer(Salle salle) Salle
     }
 
     class ReservationRepositoryInterface {
         <<interface>>
+
         +lister() array
-        +retrouver(int id) ?Reservation
-        +rechercherConflit(int salleId, DateTimeImmutable dateDebut, DateTimeImmutable dateFin) ?Reservation
-        +enregistrer(Reservation reservation) ?Reservation
-        +annuler(Reservation reservation) ?Reservation
+        +retrouver(int id) Reservation
+        +rechercherConflit(int salleId, DateTimeImmutable dateDebut, DateTimeImmutable dateFin) Reservation
+        +enregistrer(Reservation reservation) Reservation
+        +annuler(Reservation reservation) Reservation
     }
 
     class ReservationRepository {
         +lister() array
-        +retrouver(int id) ?Reservation
-        +rechercherConflit(int salleId, DateTimeImmutable dateDebut, DateTimeImmutable dateFin) ?Reservation
-        +enregistrer(Reservation reservation) ?Reservation
-        +annuler(Reservation reservation) ?Reservation
+        +retrouver(int id) Reservation
+        +rechercherConflit(int salleId, DateTimeImmutable dateDebut, DateTimeImmutable dateFin) Reservation
+        +enregistrer(Reservation reservation) Reservation
+        +annuler(Reservation reservation) Reservation
     }
 
     SalleRepository ..|> SalleRepositoryInterface
@@ -152,6 +158,7 @@ classDiagram
 
     class ValidatorInterface {
         <<interface>>
+
         +validate(array data) ValidationResult
     }
 
@@ -167,6 +174,7 @@ classDiagram
         -bool valid
         -array errors
         -array data
+
         +isValid() bool
         +errors() array
         +data() array
@@ -232,3 +240,4 @@ classDiagram
 
     SalleRepository --> Salle : persiste
     ReservationRepository --> Reservation : persiste
+```

@@ -2,35 +2,37 @@
 
 namespace App\Controller;
 
-use App\DTO\CreerSalleDTO;
-use App\Repository\SalleRepositoryInterface;
+use App\DTO\CreerSalleDTOBuilder;
 use App\Service\CreerSalleService;
+use App\Service\ListerSallesService;
+use App\Service\ModifierSalleService;
+use App\Service\TrouverSalleService;
 use App\Validation\SalleValidator;
 
 class SalleController
 {
-    // Injection des dépendances
     public function __construct(
-        private readonly SalleRepositoryInterface $salleRepository,
+        private readonly ListerSallesService $listerSallesService,
+        private readonly TrouverSalleService $trouverSalleService,
         private readonly CreerSalleService $creerSalleService,
-        private readonly SalleValidator $salleValidator
+        private readonly ModifierSalleService $modifierSalleService,
+        private readonly SalleValidator $salleValidator,
+        private readonly CreerSalleDTOBuilder $salleDTOBuilder
     ) {
     }
-
-    // Afficher la liste des salles
+//afficher toutes les salles
     public function index(): void
     {
-        $salles = $this->salleRepository->lister();
+        $salles = $this->listerSallesService->executer();
 
         require __DIR__ . '/../../templates/salle/index.php';
     }
-
-    // Afficher une salle
+//affiche une salle précise
     public function show(int $id): void
     {
-        $salle = $this->salleRepository->retrouver($id);
-
-        if ($salle === null) {
+        try {
+            $salle = $this->trouverSalleService->executer($id);
+        } catch (\App\Exception\SalleIntrouvableException) {
             http_response_code(404);
             require __DIR__ . '/../../templates/error/404.php';
             return;
@@ -38,103 +40,90 @@ class SalleController
 
         require __DIR__ . '/../../templates/salle/show.php';
     }
-
-    // Afficher le formulaire de création
+//affiche seulement le formulaire
     public function create(): void
     {
         require __DIR__ . '/../../templates/salle/form.php';
     }
-
-    // Enregistrer une nouvelle salle
+//récupère les données envoyées par le formulaire
     public function store(): void
     {
-        // Récupérer les données du formulaire
         $data = $_POST;
 
-        // Valider les données
         $result = $this->salleValidator->validate($data);
 
-        // Si les données sont invalides
         if (!$result->isValid()) {
             $errors = $result->errors();
 
-            // Réafficher le formulaire avec les erreurs
             require __DIR__ . '/../../templates/salle/form.php';
             return;
         }
 
-        // Créer le DTO
-        $dto = new CreerSalleDTO(
-            nom: $data['nom'],
-            batiment: $data['batiment'],
-            capacite: (int) $data['capacite'],
-            type: $data['type'],
-            active: filter_var($data['active'], FILTER_VALIDATE_BOOLEAN)
-        );
+        $dto = $this->salleDTOBuilder
+            ->nom($data['nom'])
+            ->batiment($data['batiment'])
+            ->capacite((int) $data['capacite'])
+            ->type($data['type'])
+            ->active(filter_var($data['active'], FILTER_VALIDATE_BOOLEAN))
+            ->build();
 
-        // Créer la salle
         $this->creerSalleService->executer($dto);
 
-        // Rediriger vers la liste
         header('Location: /salles?success=salle_created');
         exit;
     }
 
-    // Afficher le formulaire de modification
     public function edit(int $id): void
     {
-        // Récupérer la salle
-        $salle = $this->salleRepository->retrouver($id);
-
-        if ($salle === null) {
+        try {
+            $salle = $this->trouverSalleService->executer($id);
+        } catch (\App\Exception\SalleIntrouvableException) {
             http_response_code(404);
             require __DIR__ . '/../../templates/error/404.php';
             return;
         }
 
-        // Afficher le formulaire
         require __DIR__ . '/../../templates/salle/form.php';
     }
 
-    // Modifier une salle
     public function update(int $id): void
     {
-    // Récupérer la salle
-    $salle = $this->salleRepository->retrouver($id);
+        $data = $_POST;
 
-    if ($salle === null) {
-        http_response_code(404);
-        require __DIR__ . '/../../templates/error/404.php';
-        return;
-    }
+        $result = $this->salleValidator->validate($data);
 
-    // Récupérer les données du formulaire
-    $data = $_POST;
+        if (!$result->isValid()) {
+            $errors = $result->errors();
 
-    // Valider les données
-    $result = $this->salleValidator->validate($data);
+            try {
+                $salle = $this->trouverSalleService->executer($id);
+            } catch (\App\Exception\SalleIntrouvableException) {
+                http_response_code(404);
+                require __DIR__ . '/../../templates/error/404.php';
+                return;
+            }
 
-    // Si les données sont invalides
-    if (!$result->isValid()) {
-        $errors = $result->errors();
+            require __DIR__ . '/../../templates/salle/form.php';
+            return;
+        }
 
-        // Réafficher le formulaire
-        require __DIR__ . '/../../templates/salle/form.php';
-        return;
-    }
+        $dto = $this->salleDTOBuilder
+            ->nom($data['nom'])
+            ->batiment($data['batiment'])
+            ->capacite((int) $data['capacite'])
+            ->type($data['type'])
+            ->active(filter_var($data['active'], FILTER_VALIDATE_BOOLEAN))
+            ->build();
 
-    // Modifier les informations de la salle
-    $salle->nom = $data['nom'];
-    $salle->batiment = $data['batiment'];
-    $salle->capacite = (int) $data['capacite'];
-    $salle->type = $data['type'];
-    $salle->active = filter_var($data['active'], FILTER_VALIDATE_BOOLEAN);
+        try {
+            $this->modifierSalleService->executer($id, $dto);
+        } catch (\App\Exception\SalleIntrouvableException) {
+            http_response_code(404);
+            require __DIR__ . '/../../templates/error/404.php';
+            return;
+        }
 
-    // Enregistrer les modifications
-    $this->salleRepository->enregistrer($salle);
-
-    // Rediriger vers la liste des salles
-    header('Location: /salles?success=salle_updated');
-    exit;
+        header('Location: /salles?success=salle_updated');
+        exit;
     }
 }

@@ -2,14 +2,14 @@
 
 namespace App\DTO;
 
-class CreerSalleDTO
+final class CreerSalleDTO
 {
     public function __construct(
         public readonly string $nom,
         public readonly string $batiment,
         public readonly int $capacite,
         public readonly string $type,
-        public readonly bool $active
+        public readonly bool $active = true
     ) {
     }
 }

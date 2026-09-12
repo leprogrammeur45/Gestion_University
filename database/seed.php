@@ -1,5 +1,5 @@
 <?php
-
+// mettre automatiquement des salles de test dans la base de données.
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Model\Salle;

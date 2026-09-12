@@ -4,7 +4,9 @@ namespace App\Model;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+// BelongsTo représente une relation :
+// Cette réservation appartient à une salle.
+// C'est la relation inverse de Salle::hasMany().
 class Reservation extends Model
 {
     protected $table = 'reservations';
