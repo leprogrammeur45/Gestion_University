@@ -20,6 +20,8 @@ RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' \
 
 COPY . /var/www/html
 
+COPY ca.pem /etc/ssl/certs/aiven-ca.pem
+
 WORKDIR /var/www/html
 
 RUN composer install --no-dev --optimize-autoloader
