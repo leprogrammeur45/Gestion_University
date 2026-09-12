@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+RUN a2dismod mpm_event mpm_worker || true \
+    && a2enmod mpm_prefork
+
 RUN a2enmod rewrite
 
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
