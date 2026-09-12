@@ -2,13 +2,14 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void//cree  modifier
+    public function up(): void
     {
-        Schema::create('reservations', function (Blueprint $table) {
+        $capsule = require __DIR__ . '/../../config/database.php';
+
+        $capsule->schema()->create('reservations', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('salle_id')
@@ -32,14 +33,10 @@ return new class extends Migration
         });
     }
 
-    public function down(): void//annule supprime
+    public function down(): void
     {
-        Schema::dropIfExists('reservations');
+        $capsule = require __DIR__ . '/../../config/database.php';
+
+        $capsule->schema()->dropIfExists('reservations');
     }
 };
-
-
-
-
-
-//Une migration sert à décrire la structure de la base de données dans du code.
