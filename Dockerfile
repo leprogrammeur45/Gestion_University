@@ -38,4 +38,4 @@ RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+CMD ["sh", "-c", "a2dismod -f mpm_event mpm_worker 2>/dev/null; a2enmod mpm_prefork; exec apache2-foreground"]
