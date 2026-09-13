@@ -15,7 +15,7 @@ RUN rm -f /etc/apache2/mods-enabled/mpm_event.load \
            /etc/apache2/mods-enabled/mpm_worker.conf \
     && a2enmod mpm_prefork
 
-RUN apache2ctl -M
+RUN apache2ctl -M 2>&1 | tr '\n' ' | '
 
 RUN a2enmod rewrite
 
