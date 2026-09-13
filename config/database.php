@@ -15,6 +15,12 @@ if (is_file($basePath . '/.env')) {
 
 $capsule = new Capsule();
 
+$options = [];
+
+if (!empty($_ENV['DB_SSL_CA']) && is_file($_ENV['DB_SSL_CA'])) {
+    $options[PDO::MYSQL_ATTR_SSL_CA] = $_ENV['DB_SSL_CA'];
+}
+
 $capsule->addConnection([
     'driver' => $_ENV['DB_DRIVER'],
     'host' => $_ENV['DB_HOST'],
@@ -25,9 +31,7 @@ $capsule->addConnection([
     'charset' => 'utf8mb4',
     'collation' => 'utf8mb4_unicode_ci',
     'prefix' => '',
-    'options' => [
-        PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/certs/aiven-ca.pem',
-    ],
+    'options' => $options,
 ]);
 
 $capsule->setAsGlobal();
